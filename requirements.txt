@@ -1,0 +1,5 @@
+streamlit==1.61.1
+SQLAlchemy==2.0.51
+psycopg2-binary
+python-dotenv
+Authlib
