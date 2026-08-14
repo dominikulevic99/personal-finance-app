@@ -3,3 +3,4 @@ SQLAlchemy==2.0.51
 psycopg2-binary
 python-dotenv
 Authlib
+httpx
