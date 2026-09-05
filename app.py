@@ -61,6 +61,8 @@ from calculations import calculate_financial_summary
 from users import get_or_create_user
 
 from user_data import delete_all_user_data
+from onboarding import render_onboarding_entry
+from visual_styles import apply_dashboard_styles
 
 
 # =========================================================
@@ -108,15 +110,24 @@ CURRENT_USER_ID = current_user.id
 # MAIN APP HEADER
 # =========================================================
 
-st.title("💰 My Finance App")
-st.write("Personal finance dashboard")
-
 st.sidebar.write(
     f"Signed in as {current_user.email}"
 )
 
 if st.sidebar.button("Log out"):
     st.logout()
+
+
+# Development override: show Welcome for this tester without resetting their data.
+render_onboarding_entry(
+    CURRENT_USER_ID,
+    force_welcome=current_user.email.strip().lower() == "dominic.work310@gmail.com",
+)
+
+apply_dashboard_styles()
+
+st.title("Your financial picture")
+st.caption("A little clarity for today. A plan for what comes next.")
 
 
 # =========================================================
@@ -212,50 +223,61 @@ net_worth = (
 st.divider()
 st.subheader("Financial Summary")
 
-col1, col2, col3, col4, col5, col6 = st.columns(6)
+col1, col2, col3, col4, col5, col6 = st.columns([1, 1, 1, 1, 1, 1.5])
 
 with col1:
     st.metric(
         "Available Cash",
-        f"€{available_cash:,.2f}"
+        f"€{available_cash:,.2f}",
+        help="Money currently available in your accounts and cash. Some may be set aside in funds.",
     )
 
 with col2:
     st.metric(
         "Reserved Funds",
-        f"€{total_reserved_funds:,.2f}"
+        f"€{total_reserved_funds:,.2f}",
+        help="Money you have set aside for specific purposes. It is already part of your cash, not extra money.",
     )
 
 with col3:
     st.metric(
         "Free Cash",
-        f"€{free_cash:,.2f}"
+        f"€{free_cash:,.2f}",
+        help="Your account and cash balances, minus money reserved in funds.",
     )
 
 with col4:
     st.metric(
         "Liquid Worth",
-        f"€{liquid_worth:,.2f}"
+        f"€{liquid_worth:,.2f}",
+        help="Cash plus investments that can usually be converted to cash quickly. Debts and reserved funds are not subtracted here.",
     )
 
 with col5:
     st.metric(
         "Total Debt",
-        f"€{total_debt:,.2f}"
+        f"€{total_debt:,.2f}",
+        help="The total amount you still owe across your debts.",
     )
 
 with col6:
-    st.metric(
-        "Net Worth",
-        f"€{net_worth:,.2f}"
+    with st.container(key="net_worth"):
+        st.metric(
+            "Net Worth",
+            f"€{net_worth:,.2f}",
+            help="Everything you own in cash and assets, minus everything you owe.",
+        )
+
+
+with st.expander("Understanding your financial picture"):
+    st.write(
+        "Net worth brings together your cash and all your assets, then subtracts your debts. "
+        "Liquid worth focuses on cash and investments you can usually sell quickly."
     )
-
-
-st.caption(
-    "Available Cash = bank accounts + cash. "
-    "Liquid Worth = available cash + liquid investments. "
-    "Virtual funds do not increase net worth."
-)
+    st.write(
+        "Funds are money set aside within your existing cash. They reduce your free cash, "
+        "but do not add to your net worth. Account balances need to be updated manually."
+    )
 
 
 # =========================================================
@@ -270,25 +292,29 @@ st.subheader("Add account")
 with st.form("add_account_form"):
 
     account_name = st.text_input(
-        "Account name"
+        "Account name",
+        placeholder="e.g. Revolut",
     )
 
-    account_type = st.selectbox(
-        "Account type",
-        [
-            "BANK",
-            "CASH"
-        ]
-    )
+    account_type_col, account_balance_col = st.columns(2)
+    with account_type_col:
+        account_type = st.selectbox(
+            "Account type",
+            [
+                "BANK",
+                "CASH"
+            ]
+        )
 
-    balance = st.number_input(
-        "Current balance (€)",
-        min_value=0.0,
-        step=100.0
-    )
+    with account_balance_col:
+        balance = st.number_input(
+            "Current balance (€)",
+            min_value=0.0,
+            step=100.0
+        )
 
     account_submitted = st.form_submit_button(
-        "Save account"
+        "Add account", type="primary"
     )
 
 
@@ -399,7 +425,8 @@ st.subheader("Add asset")
 with st.form("add_asset_form"):
 
     asset_name = st.text_input(
-        "Asset name"
+        "Asset name",
+        placeholder="e.g. My investment portfolio",
     )
 
     asset_type = st.selectbox(
@@ -430,7 +457,7 @@ with st.form("add_asset_form"):
     )
 
     asset_submitted = st.form_submit_button(
-        "Save asset"
+        "Save asset", type="primary"
     )
 
 
@@ -562,7 +589,8 @@ st.subheader("Add debt")
 with st.form("add_debt_form"):
 
     debt_name = st.text_input(
-        "Debt name"
+        "Debt name",
+        placeholder="e.g. Money borrowed from Jonas",
     )
 
     debt_type = st.selectbox(
@@ -595,7 +623,7 @@ with st.form("add_debt_form"):
     )
 
     debt_submitted = st.form_submit_button(
-        "Save debt"
+        "Save debt", type="primary"
     )
 
 
@@ -737,7 +765,8 @@ st.write(
 with st.form("add_fund_form"):
 
     fund_name = st.text_input(
-        "Fund name"
+        "Fund name",
+        placeholder="e.g. Emergency fund",
     )
 
     fund_balance = st.number_input(
@@ -753,7 +782,7 @@ with st.form("add_fund_form"):
     )
 
     fund_submitted = st.form_submit_button(
-        "Save fund"
+        "Save fund", type="primary"
     )
 
 
@@ -975,7 +1004,7 @@ if monthly_plan is None:
 
         create_plan_submitted = (
             st.form_submit_button(
-                "Create monthly plan"
+                "Create monthly plan", type="primary"
             )
         )
 
@@ -1180,6 +1209,7 @@ else:
 
     plan_item_name = st.text_input(
         "Allocation name",
+        placeholder="e.g. Groceries",
         key="new_plan_item_name"
     )
 
