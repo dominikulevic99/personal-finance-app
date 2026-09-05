@@ -1,3 +1,10 @@
+def calculate_planned_allocation_summary(planned_income, plan_items):
+    """The existing monthly planning totals, shared by setup and its reveal."""
+    allocated = sum(float(item.planned_amount) for item in plan_items)
+    remaining = float(planned_income) - allocated
+    return {"allocated": allocated, "remaining": remaining}
+
+
 def calculate_financial_summary(
     accounts,
     assets,

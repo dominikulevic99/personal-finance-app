@@ -176,6 +176,44 @@ DASHBOARD_CSS = """
 """
 
 
+PICTURE_CSS = """
+<style>
+.st-key-financial_picture [data-testid="stMetric"] {
+    background: var(--finance-surface);
+    border: 1px solid var(--finance-border);
+    border-radius: 18px;
+    padding: 1rem;
+    min-height: 112px;
+}
+.st-key-financial_picture [data-testid="stMetricValue"] {
+    font-size: clamp(1.3rem, 2.4vw, 1.85rem);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.035em;
+}
+.st-key-financial_picture [data-testid="stMetricValue"] > div {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+.st-key-financial_picture .st-key-picture_net_worth [data-testid="stMetric"] {
+    background: #edf1e7;
+    border-color: #c8d2c4;
+    border-top: 3px solid var(--finance-accent);
+    padding: 1.5rem;
+}
+.st-key-financial_picture .st-key-picture_net_worth [data-testid="stMetricValue"] {
+    font-size: clamp(2.2rem, 6vw, 3.6rem);
+}
+.st-key-financial_picture h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--finance-text);
+    margin-top: .6rem;
+}
+</style>
+"""
+
+
 def apply_dashboard_styles():
     """Called only after onboarding routing has returned to the dashboard."""
     st.html(PALETTE_CSS + BUTTON_CSS + DASHBOARD_CSS + FORM_CSS)

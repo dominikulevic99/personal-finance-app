@@ -123,18 +123,18 @@ ONBOARDING_CSS = """
 
 
 @contextmanager
-def onboarding_shell(step=None, encouragement="A little clarity starts here."):
+def onboarding_shell(step=None, encouragement="A little clarity starts here.", complete=False):
     """Wrap a screen; pass step=1..5 when guided steps are implemented.
 
-    Welcome has no step number because it precedes the five setup steps.
+    Welcome has no step number; complete=True displays the finished setup state.
     """
     if step is not None and (isinstance(step, bool) or not isinstance(step, int) or not 1 <= step <= 5):
         raise ValueError("Onboarding step must be an integer from 1 to 5.")
     st.html(PALETTE_CSS + ONBOARDING_CSS + BUTTON_CSS + FORM_CSS)
     with st.container(key="onboarding_shell"):
-        label = "Your financial plan" if step is None else f"Step {step} of 5"
+        label = "Setup complete" if complete else "Your financial plan" if step is None else f"Step {step} of 5"
         # The bar represents steps completed before the current screen.
-        completed = 0 if step is None else step - 1
+        completed = 5 if complete else 0 if step is None else step - 1
         st.html(
             '<div class="onboarding-eyebrow">A little more peace of mind</div>'
             '<div class="onboarding-progress-label">'
