@@ -3,6 +3,7 @@
 from datetime import date
 
 import streamlit as st
+from analytics import track_event
 
 from assets import get_assets
 from calculations import calculate_planned_allocation_summary
@@ -73,6 +74,7 @@ def _render_income(user_id, prefix, year, month, plan):
                     existing = get_monthly_plan(user_id, year, month)
                     if existing is None:
                         create_monthly_plan(user_id, year, month, income)
+                        track_event(user_id, "monthly_plan_created", session_state=st.session_state)
                 else:
                     update_planned_income(user_id, plan.id, income)
             except Exception:

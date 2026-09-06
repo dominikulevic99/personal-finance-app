@@ -5,6 +5,7 @@ import streamlit as st
 from accounts import get_accounts
 from calculations import calculate_financial_summary
 from funds import add_fund, get_funds
+from fund_progress import render_fund_progress
 
 
 def render_funds_step(user_id):
@@ -13,19 +14,31 @@ def render_funds_step(user_id):
     form_open_key = prefix + "fund_form_open"
     form_version_key = prefix + "fund_form_version"
 
-    st.title("What are you saving for?")
+    st.title("Give your savings a purpose.")
     st.write(
-        "A Fund is money you mentally set aside for a specific purpose — "
-        "for example an emergency fund, travel, a car or a home deposit."
+        "Not all money in your bank account is really available to spend. "
+        "Funds let you reserve part of your existing cash for things you care about."
     )
-    st.caption("Ideas: Emergency fund · Travel · Car · Home · Other")
-    st.info(
-        "Funds reserve money already in your accounts or cash. "
-        "They do not add extra money or increase your net worth."
-    )
+    with st.container(border=True):
+        st.caption("Example — not your balances")
+        st.write("**€5,000 available**")
+        st.text("€1,500  Emergency\n€800    Japan\n€900    Laptop")
+        st.write("**€1,800 still free**")
+        st.write(
+            "Your bank still shows €5,000 — but now you know what €3,200 is already for."
+        )
+    st.write("If it matters enough to plan for, it can be a Fund.")
     with st.expander("How Funds work"):
-        st.write("You can allocate part of your monthly income toward a Fund.")
-        st.write("At the end of the month, you confirm how much you actually contributed.")
+        st.write(
+            "A Fund here is not an investment fund. It reserves existing cash "
+            "and does not create additional wealth or increase your net worth."
+        )
+        st.write(
+            "You can allocate part of your monthly income toward a Fund. "
+            "A planned allocation is an intention, not an actual contribution."
+        )
+        st.write(
+            "At the end of the month, you confirm how much you actually contributed.")
         st.write("Confirmed contributions update the Fund balance.")
         st.write(
             "Your bank account balances are not synchronized automatically, "
@@ -36,9 +49,11 @@ def render_funds_step(user_id):
     try:
         funds = get_funds(user_id)
         accounts = get_accounts(user_id)
-        available_cash = calculate_financial_summary(accounts, [], [], funds)["available_cash"]
+        available_cash = calculate_financial_summary(
+            accounts, [], [], funds)["available_cash"]
     except Exception:
-        st.error("We couldn't load your funds and account balances. Please try again.")
+        st.error(
+            "We couldn't load your funds and account balances. Please try again.")
         if st.button("Retry", key=prefix + "funds_retry"):
             st.rerun()
         return
@@ -48,18 +63,25 @@ def render_funds_step(user_id):
 
     if funds:
         st.subheader("Your funds")
-        for fund in funds:
+        show_all_key = prefix + "show_all_funds"
+        show_all = st.session_state.get(show_all_key, False)
+        if len(funds) > 3:
+            if st.button(
+                "Show fewer funds" if show_all else "Show all funds",
+                type="tertiary", key=prefix + "toggle_funds",
+            ):
+                st.session_state[show_all_key] = not show_all
+                st.rerun()
+            st.caption(f"Showing {len(funds) if show_all else 3} of {len(funds)} funds")
+        for fund in (funds if show_all else funds[:3]):
             with st.container(border=True):
                 st.text(fund.name)
-                st.caption(f"{fund.current_balance:,.2f} EUR set aside")
-                if fund.target_amount is not None and fund.target_amount > 0:
-                    st.caption(f"Target: {fund.target_amount:,.2f} EUR")
-                else:
-                    st.caption("No target set yet")
+                render_fund_progress(fund.current_balance, fund.target_amount)
 
     form_open = st.session_state.get(form_open_key, not funds)
     if form_open:
-        draft_prefix = prefix + f"fund_draft_{st.session_state.get(form_version_key, 0)}_"
+        draft_prefix = prefix + \
+            f"fund_draft_{st.session_state.get(form_version_key, 0)}_"
         with st.form(draft_prefix + "form"):
             name = st.text_input(
                 "Fund name", placeholder="e.g. Emergency fund", key=draft_prefix + "name"
@@ -100,7 +122,8 @@ def render_funds_step(user_id):
                     st.session_state[prefix + "fund_save_uncertain"] = True
                 else:
                     st.session_state[form_open_key] = False
-                    st.session_state[form_version_key] = st.session_state.get(form_version_key, 0) + 1
+                    st.session_state[form_version_key] = st.session_state.get(
+                        form_version_key, 0) + 1
                     st.session_state[prefix + "fund_saved"] = True
                     st.session_state.pop(prefix + "fund_save_uncertain", None)
                     st.rerun()

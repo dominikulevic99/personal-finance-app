@@ -11,6 +11,7 @@ from onboarding_debts import render_debts_step
 from onboarding_funds import render_funds_step
 from onboarding_monthly_plan import render_monthly_plan_step
 from onboarding_picture import render_financial_picture
+from onboarding_navigation import render_step_navigation
 
 
 def render_guide_replay_action(user_id):
@@ -22,6 +23,7 @@ def render_guide_replay_action(user_id):
         help="Walk through the guide again using your saved information. Nothing is deleted.",
     ):
         st.session_state[prefix + "replay_welcome"] = True
+        st.session_state[prefix + "replay_mode"] = True
         st.session_state[prefix + "dashboard"] = False
         st.session_state[prefix + "step"] = "accounts"
         st.rerun()
@@ -70,6 +72,7 @@ def render_onboarding_entry(user_id, force_welcome=False):
         complete=route == "started" and step == "financial_picture",
     ):
         if route == "started":
+            render_step_navigation(user_id, unrestricted=force_welcome)
             track_event(user_id, "onboarding_step_viewed", step, session_state=st.session_state)
         if route == "welcome":
             render_welcome_content()
@@ -96,7 +99,7 @@ def render_onboarding_entry(user_id, force_welcome=False):
             render_monthly_plan_step(user_id)
             dashboard_label = "Open my dashboard"
         else:
-            render_financial_picture(user_id)
+            render_financial_picture(user_id, track_completion=not force_welcome)
             if st.button("Back to Monthly Plan", type="tertiary", key=prefix + "financial_picture_back"):
                 st.session_state[prefix + "step"] = "monthly_plan"
                 st.rerun()

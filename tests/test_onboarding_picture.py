@@ -82,6 +82,17 @@ class FinancialPictureTests(unittest.TestCase):
             "Planned allocations": "€2,300.00", "Unallocated": "€200.00",
         })
 
+    def test_replay_reveal_does_not_log_onboarding_completion(self):
+        self.ui.session_state['onboarding_7_replay_mode'] = True
+        picture_ui.render_financial_picture(7)
+        self.analytics.assert_not_called()
+        self.assertIn('Net worth', self.ui.metrics)
+
+    def test_tester_jump_does_not_log_completion(self):
+        picture_ui.render_financial_picture(7, track_completion=False)
+        self.analytics.assert_not_called()
+        self.assertIn('Net worth', self.ui.metrics)
+
     def test_all_reads_use_user_and_selected_month(self):
         picture_ui.load_financial_picture(8, 2026, 8)
         for name in ("get_accounts", "get_assets", "get_debts", "get_funds"):

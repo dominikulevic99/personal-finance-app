@@ -6,6 +6,38 @@ import tomllib
 import streamlit as st
 
 
+def fund_card_style(key, fraction):
+    """Scope a subtle linear goal indicator to a single native expander header."""
+    bar = ""
+    if fraction is not None:
+        percentage = max(0.0, min(1.0, fraction)) * 100
+        bar = f"""
+        background-image: linear-gradient(var(--finance-accent), var(--finance-accent)),
+                          linear-gradient(var(--finance-border), var(--finance-border));
+        background-size: {percentage}% 4px, 100% 4px;
+        background-position: left bottom;
+        background-repeat: no-repeat;
+        """
+    return f"""<style>
+    .st-key-{key} [data-testid="stExpander"] {{
+        background: var(--finance-surface);
+        border: 1px solid var(--finance-border);
+        border-radius: 14px;
+        overflow: hidden;
+    }}
+    .st-key-{key} [data-testid="stExpander"] summary {{
+        padding: .75rem 1rem 1rem;
+        {bar}
+    }}
+    .st-key-{key} summary [data-testid="stMarkdownContainer"] p {{
+        white-space: normal;
+        overflow-wrap: anywhere;
+        line-height: 1.5;
+        margin: 0;
+    }}
+    </style>"""
+
+
 # Read only the public theme file, never Streamlit secrets. This is the single
 # source for the main palette used by native widgets and our custom CSS.
 with (Path(__file__).parent / ".streamlit" / "config.toml").open("rb") as theme_file:

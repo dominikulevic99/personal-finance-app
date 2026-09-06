@@ -27,6 +27,7 @@ class ReplayUI(FakeUI):
 class GuideReplayTests(unittest.TestCase):
     def setUp(self):
         self.ui = ReplayUI()
+        patch.object(onboarding, "render_step_navigation").start()
         self.analytics = patch.object(onboarding, "track_event").start()
         patch.object(onboarding, "st", self.ui).start()
         patch.object(onboarding, "onboarding_shell", side_effect=lambda **kwargs: nullcontext()).start()
@@ -81,6 +82,7 @@ class GuideReplayTests(unittest.TestCase):
         original = dict(self.ui.session_state)
         self.replay()
         expected = original | {
+            "onboarding_7_replay_mode": True,
             "onboarding_7_replay_welcome": True,
             "onboarding_7_dashboard": False,
             "onboarding_7_step": "accounts",

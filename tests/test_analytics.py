@@ -29,12 +29,14 @@ class AnalyticsTests(unittest.TestCase):
 
     def test_each_event_and_step_is_attempted_once_per_session(self):
         events = [(name, None) for name in (
-            "login", "onboarding_started", "onboarding_completed", "dashboard_opened")]
+            "login", "onboarding_started", "onboarding_completed", "dashboard_opened",
+            "monthly_plan_created")]
+        events += [("contribution_confirmed", kind) for kind in ("fund", "investment")]
         events += [("onboarding_step_viewed", step) for step in ONBOARDING_STEPS]
         for event, value in events:
             self.assertTrue(self.track(event, value))
             self.assertFalse(self.track(event, value))
-        self.assertEqual(self.connection.execute.call_count, 10)
+        self.assertEqual(self.connection.execute.call_count, 13)
 
     def test_users_and_new_sessions_are_independent(self):
         self.assertTrue(self.track(user=7))
@@ -58,7 +60,10 @@ class AnalyticsTests(unittest.TestCase):
     def test_financial_payloads_and_unknown_events_are_rejected(self):
         for event, value in (("balance", None), ("login", "1250"),
                              ("onboarding_step_viewed", "1250"),
-                             ("onboarding_step_viewed", None)):
+                             ("onboarding_step_viewed", None),
+                             ("contribution_confirmed", "1250"),
+                             ("contribution_confirmed", None),
+                             ("monthly_plan_created", "2500")):
             self.assertFalse(self.track(event, value))
         self.engine.begin.assert_not_called()
         self.assertEqual(self.state, {})

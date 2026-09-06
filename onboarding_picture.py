@@ -4,6 +4,7 @@ from datetime import date
 
 import streamlit as st
 from analytics import track_event
+from monthly_checkin import RETURN_COPY
 
 from accounts import get_accounts
 from assets import get_assets
@@ -31,7 +32,7 @@ def load_financial_picture(user_id, year, month):
     return summary, monthly
 
 
-def render_financial_picture(user_id):
+def render_financial_picture(user_id, *, track_completion=True):
     prefix = f"onboarding_{user_id}_"
     today = date.today()
     year, month = st.session_state.get(prefix + "plan_month", (today.year, today.month))
@@ -43,7 +44,8 @@ def render_financial_picture(user_id):
             st.rerun()
         return
 
-    track_event(user_id, "onboarding_completed", session_state=st.session_state)
+    if track_completion and not st.session_state.get(prefix + "replay_mode", False):
+        track_event(user_id, "onboarding_completed", session_state=st.session_state)
     st.html(PICTURE_CSS)
     with st.container(key="financial_picture"):
         st.title("Your financial picture is ready.")
@@ -104,6 +106,16 @@ def render_financial_picture(user_id):
             else:
                 st.caption("All of your expected income is allocated in this plan.")
             st.caption("These are intentions, not actual contributions. Planning does not move money or change balances.")
+
+        with st.container(border=True):
+            if monthly is not None and (year, month) == (today.year, today.month):
+                st.subheader("You're set for this month.")
+                st.caption("Your plan is saved. You can adjust it whenever you need to.")
+            else:
+                st.subheader("Make room for a monthly check-in.")
+                st.caption("Prepare this month's plan in the dashboard when you're ready.")
+            st.write("You don't need to check this app every day.")
+            st.write(RETURN_COPY)
 
         with st.expander("Your monthly routine"):
             st.markdown(

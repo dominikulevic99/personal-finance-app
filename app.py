@@ -63,6 +63,8 @@ from users import get_or_create_user
 from user_data import delete_all_user_data
 from onboarding import render_onboarding_entry, render_guide_replay_action
 from analytics import track_event
+from monthly_checkin import render_monthly_checkin
+from fund_progress import fund_progress_card
 from visual_styles import apply_dashboard_styles
 
 
@@ -133,6 +135,7 @@ track_event(CURRENT_USER_ID, "dashboard_opened")
 
 st.title("Your financial picture")
 st.caption("A little clarity for today. A plan for what comes next.")
+render_monthly_checkin(CURRENT_USER_ID)
 
 
 # =========================================================
@@ -839,9 +842,7 @@ else:
             else 0.0
         )
 
-        with st.expander(
-            f"{fund.name} — €{balance:,.2f}"
-        ):
+        with fund_progress_card(CURRENT_USER_ID, fund):
 
             # -----------------------------
             # EDIT FUND NAME
@@ -876,25 +877,6 @@ else:
                 step=100.0,
                 key=f"fund_target_{fund.id}"
             )
-
-            # -----------------------------
-            # FUND PROGRESS
-            # -----------------------------
-
-            if target > 0:
-
-                raw_progress = balance / target
-
-                display_progress = min(
-                    raw_progress,
-                    1.0
-                )
-
-                st.progress(display_progress)
-
-                st.write(
-                    f"{raw_progress * 100:.1f}% of target"
-                )
 
             # -----------------------------
             # SAVE / DELETE BUTTONS
@@ -1021,6 +1003,7 @@ if monthly_plan is None:
             planned_income
         )
 
+        track_event(CURRENT_USER_ID, "monthly_plan_created")
         st.success(
             "Monthly plan created."
         )
@@ -1847,6 +1830,7 @@ else:
                                     contribution_description
                                 )
 
+                                track_event(CURRENT_USER_ID, "contribution_confirmed", "fund")
                                 st.success(
                                     "Fund contribution recorded."
                                 )
@@ -2056,6 +2040,7 @@ else:
                                     investment_description
                                 )
 
+                                track_event(CURRENT_USER_ID, "contribution_confirmed", "investment")
                                 st.success(
                                     f"€{investment_amount:,.2f} "
                                     f"added to "

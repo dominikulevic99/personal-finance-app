@@ -7,6 +7,7 @@ from sqlalchemy import text
 EVENT_TYPES = frozenset({
     "login", "onboarding_started", "onboarding_step_viewed",
     "onboarding_completed", "dashboard_opened",
+    "monthly_plan_created", "contribution_confirmed",
 })
 ONBOARDING_STEPS = frozenset({
     "accounts", "assets", "debts", "funds", "monthly_plan", "financial_picture",
@@ -26,6 +27,9 @@ def track_event(user_id, event_type, event_value=None, *, session_state=None):
             return False
         if event_type == "onboarding_step_viewed":
             if event_value not in ONBOARDING_STEPS:
+                return False
+        elif event_type == "contribution_confirmed":
+            if event_value not in {"fund", "investment"}:
                 return False
         elif event_value is not None:
             return False
