@@ -34,6 +34,15 @@ BUTTON_CSS = """
     min-height: 44px;
     padding: .6rem 1.15rem;
     font-weight: 600;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+:is([data-testid="stButton"], [data-testid="stFormSubmitButton"]) button[kind="tertiary"] {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--finance-muted);
+    padding-inline: .4rem;
 }
 :is([data-testid="stButton"], [data-testid="stFormSubmitButton"]) button[kind^="secondary"] {
     background: var(--finance-surface);
@@ -87,12 +96,18 @@ FORM_CSS = """
 """
 
 
-DASHBOARD_CSS = """
+LAYOUT_CSS = """
 <style>
-[data-testid="stMainBlockContainer"] {
-    max-width: 1440px;
-    padding-top: 2.5rem;
-    padding-bottom: 4rem;
+/* Streamlit's semantic info marker excludes warning/error/success alerts. */
+[data-testid="stAlertContainer"]:has(> [data-testid="stAlertContentInfo"]) {
+    background: var(--finance-surface);
+    border: 1px solid var(--finance-control-border);
+    border-radius: 14px;
+    color: var(--finance-text);
+}
+/* Keep native status text colors, including within the onboarding shell. */
+[data-testid="stAlertContainer"] [data-testid^="stAlertContent"] p {
+    color: inherit;
 }
 [data-testid="stMain"] h1 {
     color: var(--finance-text);
@@ -104,19 +119,24 @@ DASHBOARD_CSS = """
     font-size: 1.7rem;
     font-weight: 600;
     letter-spacing: -.025em;
-    padding-top: .5rem;
-    padding-bottom: .8rem;
+    padding-top: .25rem;
+    padding-bottom: .65rem;
 }
 [data-testid="stMain"] h3 {
     color: var(--finance-muted);
     font-size: 1.1rem;
     font-weight: 600;
-    padding-bottom: .8rem;
+    padding-bottom: .6rem;
 }
 [data-testid="stMain"] hr {
     border-color: var(--finance-border);
-    margin: 2rem 0 1.25rem;
+    margin: 1.5rem 0 1rem;
 }
+[data-testid="stMain"] :is(h1, h2, h3, p),
+[data-testid="stText"], [data-testid="stText"] pre {
+    overflow-wrap: anywhere;
+}
+[data-testid="stText"], [data-testid="stText"] pre { white-space: pre-wrap; }
 [data-testid="stMetric"] {
     background: var(--finance-surface);
     border: 1px solid var(--finance-border);
@@ -124,22 +144,11 @@ DASHBOARD_CSS = """
     padding: 1.1rem;
     min-height: 116px;
 }
-.st-key-net_worth [data-testid="stMetric"] {
-    background: #edf1e7;
-    border-top: 3px solid var(--finance-accent);
-}
-.st-key-net_worth [data-testid="stMetricValue"] {
-    font-size: clamp(1.65rem, 2.5vw, 2.4rem);
-    font-weight: 650;
-}
-.st-key-net_worth [data-testid="stMetricLabel"] {
-    color: var(--finance-accent);
-    font-weight: 600;
-}
 [data-testid="stMetricLabel"] {
     color: var(--finance-muted);
     font-size: .85rem;
 }
+[data-testid="stMetricLabel"] p { white-space: normal; }
 [data-testid="stMetricValue"] {
     font-size: clamp(1.2rem, 1.9vw, 1.85rem);
     font-weight: 600;
@@ -166,34 +175,57 @@ DASHBOARD_CSS = """
     padding: .9rem 1rem;
     font-weight: 500;
 }
-[data-testid="stSidebar"] {
-    border-right: 1px solid var(--finance-border);
+@media (min-width: 641px) and (max-width: 1050px) {
+    [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [data-testid="stMetric"]) {
+        flex-wrap: wrap;
+    }
+    [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [data-testid="stMetric"]) > [data-testid="stColumn"] {
+        flex: 1 1 calc(33.333% - 1rem);
+        min-width: 0;
+    }
 }
 @media (max-width: 640px) {
-    [data-testid="stMainBlockContainer"] { padding-top: 1.5rem; }
+    [data-testid="stMainBlockContainer"] { padding: 1.25rem 1rem 2rem; }
+    [data-testid="stHorizontalBlock"] { flex-wrap: wrap; }
+    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+        flex: 1 1 100%;
+        width: 100%;
+        min-width: 0;
+    }
+    [data-testid="stMain"] h2 { font-size: 1.5rem; }
 }
+</style>
+"""
+
+
+DASHBOARD_CSS = """
+<style>
+[data-testid="stMainBlockContainer"] {
+    max-width: 1440px;
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+}
+.st-key-net_worth [data-testid="stMetric"] {
+    background: #edf1e7;
+    border-top: 3px solid var(--finance-accent);
+}
+.st-key-net_worth [data-testid="stMetricValue"] {
+    font-size: clamp(1.65rem, 2.5vw, 2.4rem);
+    font-weight: 650;
+}
+.st-key-net_worth [data-testid="stMetricLabel"] {
+    color: var(--finance-accent);
+    font-weight: 600;
+}
+[data-testid="stSidebar"] { border-right: 1px solid var(--finance-border); }
 </style>
 """
 
 
 PICTURE_CSS = """
 <style>
-.st-key-financial_picture [data-testid="stMetric"] {
-    background: var(--finance-surface);
-    border: 1px solid var(--finance-border);
-    border-radius: 18px;
-    padding: 1rem;
-    min-height: 112px;
-}
 .st-key-financial_picture [data-testid="stMetricValue"] {
     font-size: clamp(1.3rem, 2.4vw, 1.85rem);
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -.035em;
-}
-.st-key-financial_picture [data-testid="stMetricValue"] > div {
-    white-space: normal;
-    overflow-wrap: anywhere;
 }
 .st-key-financial_picture .st-key-picture_net_worth [data-testid="stMetric"] {
     background: #edf1e7;
@@ -216,4 +248,4 @@ PICTURE_CSS = """
 
 def apply_dashboard_styles():
     """Called only after onboarding routing has returned to the dashboard."""
-    st.html(PALETTE_CSS + BUTTON_CSS + DASHBOARD_CSS + FORM_CSS)
+    st.html(PALETTE_CSS + BUTTON_CSS + DASHBOARD_CSS + LAYOUT_CSS + FORM_CSS)

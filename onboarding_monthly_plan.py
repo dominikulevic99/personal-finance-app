@@ -87,7 +87,7 @@ def _render_income(user_id, prefix, year, month, plan):
         if st.button("Reload plan", key=prefix + "income_reload"):
             st.session_state.pop(prefix + "income_uncertain", None)
             st.rerun()
-    if plan is not None and st.button("Cancel", key=prefix + "income_cancel"):
+    if plan is not None and st.button("Cancel", type="tertiary", key=prefix + "income_cancel"):
         st.session_state[edit_key] = False
         st.rerun()
     return True
@@ -112,7 +112,7 @@ def _render_allocation_form(user_id, prefix, plan, items, funds_by_id, investmen
             is_fund = category == "FUND"
             st.info("Create a fund first to plan saving toward it." if is_fund else
                     "Add an investment asset first to plan investing toward it.")
-            if st.button("Back to Funds" if is_fund else "Back to Assets", key=draft_prefix + "create_target"):
+            if st.button("Back to Funds" if is_fund else "Back to Assets", type="tertiary", key=draft_prefix + "create_target"):
                 st.session_state[f"onboarding_{user_id}_step"] = "funds" if is_fund else "assets"
                 st.rerun()
 
@@ -164,7 +164,7 @@ def _render_allocation_form(user_id, prefix, plan, items, funds_by_id, investmen
             if st.button("Reload allocations", key=prefix + "allocation_reload"):
                 st.session_state.pop(prefix + "allocation_uncertain", None)
                 st.rerun()
-        if st.button("Cancel" if items else "Plan allocations later", key=prefix + "allocation_cancel"):
+        if st.button("Cancel" if items else "Plan allocations later", type="tertiary", key=prefix + "allocation_cancel"):
             st.session_state[prefix + "allocation_open"] = False
             st.rerun()
 
@@ -239,6 +239,6 @@ def render_monthly_plan_step(user_id):
             st.session_state[prefix + "edit_income"] = True
             st.rerun()
 
-    if st.button("Back to Funds", key=prefix + "back"):
+    if st.button("Back to Funds", type="tertiary", key=prefix + "back"):
         st.session_state[user_prefix + "step"] = "funds"
         st.rerun()

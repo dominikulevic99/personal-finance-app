@@ -3,6 +3,7 @@
 from datetime import date
 
 import streamlit as st
+from analytics import track_event
 
 from accounts import get_accounts
 from assets import get_assets
@@ -42,6 +43,7 @@ def render_financial_picture(user_id):
             st.rerun()
         return
 
+    track_event(user_id, "onboarding_completed", session_state=st.session_state)
     st.html(PICTURE_CSS)
     with st.container(key="financial_picture"):
         st.title("Your financial picture is ready.")
@@ -51,7 +53,7 @@ def render_financial_picture(user_id):
         with st.container(key="picture_net_worth"):
             st.metric(
                 "Net worth", f"€{summary['net_worth']:,.2f}",
-                help="Your account balances and asset values, minus what you still owe. Funds are already part of your cash.",
+                help="What you own minus what you owe.",
             )
         if summary["net_worth"] > 0:
             st.caption("Based on your saved figures, what you own is worth more than what you owe.")
@@ -63,12 +65,12 @@ def render_financial_picture(user_id):
         cash_col, debt_col, funds_col = st.columns(3)
         with cash_col:
             st.metric("Available cash", f"€{summary['available_cash']:,.2f}",
-                      help="Money recorded in your accounts and cash, including money reserved in funds.")
+                      help="Money currently available in your accounts and cash.")
         with debt_col:
             st.metric("Debt", f"€{summary['total_debt']:,.2f}", help="The total amount you still owe.")
         with funds_col:
             st.metric("Set aside in funds", f"€{summary['reserved_funds']:,.2f}",
-                      help="Money reserved within your existing cash. This does not add to net worth.")
+                      help="Part of your available cash assigned to specific goals.")
         st.caption("Funds reserve existing cash; they are not additional wealth.")
 
         with st.expander("Your assets, by how readily available they are"):

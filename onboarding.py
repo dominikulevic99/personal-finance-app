@@ -1,6 +1,7 @@
 """Welcome and guided setup routing; financial steps live in separate modules."""
 
 import streamlit as st
+from analytics import track_event
 
 from onboarding_service import get_entry_route
 from onboarding_layout import onboarding_shell, render_welcome_content
@@ -10,6 +11,20 @@ from onboarding_debts import render_debts_step
 from onboarding_funds import render_funds_step
 from onboarding_monthly_plan import render_monthly_plan_step
 from onboarding_picture import render_financial_picture
+
+
+def render_guide_replay_action(user_id):
+    """Voluntary navigation only; financial records and draft inputs stay intact."""
+    prefix = f"onboarding_{user_id}_"
+    if st.sidebar.button(
+        "Repeat setup guide",
+        key=prefix + "replay",
+        help="Walk through the guide again using your saved information. Nothing is deleted.",
+    ):
+        st.session_state[prefix + "replay_welcome"] = True
+        st.session_state[prefix + "dashboard"] = False
+        st.session_state[prefix + "step"] = "accounts"
+        st.rerun()
 
 
 def render_onboarding_entry(user_id, force_welcome=False):
@@ -24,6 +39,7 @@ def render_onboarding_entry(user_id, force_welcome=False):
             started=st.session_state.get(started_key, False),
             dashboard_requested=st.session_state.get(dashboard_key, False),
             force_welcome=force_welcome,
+            replay_requested=st.session_state.get(prefix + "replay_welcome", False),
         )
     except Exception:
         # Database exceptions can contain connection details; do not display them.
@@ -33,10 +49,6 @@ def render_onboarding_entry(user_id, force_welcome=False):
         st.stop()
 
     if route == "dashboard":
-        if st.session_state.get(started_key, False):
-            if st.sidebar.button("Return to setup", key=prefix + "return"):
-                st.session_state[dashboard_key] = False
-                st.rerun()
         return
 
     step = st.session_state.get(prefix + "step", "accounts")
@@ -57,11 +69,15 @@ def render_onboarding_entry(user_id, force_welcome=False):
         step=shell_step, encouragement=encouragement,
         complete=route == "started" and step == "financial_picture",
     ):
+        if route == "started":
+            track_event(user_id, "onboarding_step_viewed", step, session_state=st.session_state)
         if route == "welcome":
             render_welcome_content()
             if st.button("Build my financial plan", type="primary", key=prefix + "start"):
                 st.session_state[started_key] = True
+                st.session_state[prefix + "replay_welcome"] = False
                 st.session_state[prefix + "step"] = "accounts"
+                track_event(user_id, "onboarding_started", session_state=st.session_state)
                 st.rerun()
             dashboard_label = "Skip for now"
         elif step == "accounts":
@@ -81,17 +97,18 @@ def render_onboarding_entry(user_id, force_welcome=False):
             dashboard_label = "Open my dashboard"
         else:
             render_financial_picture(user_id)
-            if st.button("Back to Monthly Plan", key=prefix + "financial_picture_back"):
+            if st.button("Back to Monthly Plan", type="tertiary", key=prefix + "financial_picture_back"):
                 st.session_state[prefix + "step"] = "monthly_plan"
                 st.rerun()
             dashboard_label = "Open my dashboard"
 
         if st.button(
             dashboard_label,
-            type="primary" if route == "started" and step == "financial_picture" else "secondary",
+            type="primary" if route == "started" and step == "financial_picture" else "tertiary",
             key=prefix + "open_dashboard",
         ):
             # Keep the started flag so a future saved account cannot end setup.
             st.session_state[dashboard_key] = True
+            st.session_state[prefix + "replay_welcome"] = False
             st.rerun()
     st.stop()

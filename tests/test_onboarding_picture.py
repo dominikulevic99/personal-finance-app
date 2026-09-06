@@ -48,6 +48,7 @@ class PictureUI(FakeUI):
 class FinancialPictureTests(unittest.TestCase):
     def setUp(self):
         self.ui = PictureUI()
+        self.analytics = patch.object(picture_ui, "track_event").start()
         self.accounts = [SimpleNamespace(balance=Decimal("2500"))]
         self.assets = [
             SimpleNamespace(current_value=Decimal("4000"), liquidity_class="LIQUID_INVESTMENT"),
@@ -72,6 +73,7 @@ class FinancialPictureTests(unittest.TestCase):
     def test_displayed_metrics_match_shared_calculations(self):
         picture_ui.render_financial_picture(7)
         self.summary.assert_called_once_with(self.accounts, self.assets, self.debts, self.funds)
+        self.analytics.assert_called_once_with(7, "onboarding_completed", session_state=self.ui.session_state)
         self.assertEqual(self.ui.metrics, {
             "Net worth": "€87,500.00", "Available cash": "€2,500.00",
             "Debt": "€20,000.00", "Set aside in funds": "€500.00",
@@ -133,6 +135,7 @@ class FinancialPictureTests(unittest.TestCase):
                 reader.side_effect = RuntimeError("private database detail")
                 picture_ui.render_financial_picture(7)
                 self.assertFalse(self.ui.metrics)
+                self.analytics.assert_not_called()
                 self.assertNotIn("Your financial picture is ready.", self.ui.headlines)
                 self.assertIn("Retry", self.ui.buttons)
                 self.assertNotIn("private database detail", str(self.ui.errors))

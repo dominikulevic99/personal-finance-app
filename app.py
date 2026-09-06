@@ -61,7 +61,8 @@ from calculations import calculate_financial_summary
 from users import get_or_create_user
 
 from user_data import delete_all_user_data
-from onboarding import render_onboarding_entry
+from onboarding import render_onboarding_entry, render_guide_replay_action
+from analytics import track_event
 from visual_styles import apply_dashboard_styles
 
 
@@ -71,7 +72,7 @@ from visual_styles import apply_dashboard_styles
 
 st.set_page_config(
     page_title="My Finance App",
-    page_icon="💰",
+    page_icon=":material/account_balance_wallet:",
     layout="wide"
 )
 
@@ -82,7 +83,7 @@ st.set_page_config(
 
 if not st.user.is_logged_in:
 
-    st.title("💰 My Finance App")
+    st.title("My Finance App")
 
     st.write(
         "Sign in to access your private financial dashboard."
@@ -104,15 +105,18 @@ current_user = get_or_create_user(
 )
 
 CURRENT_USER_ID = current_user.id
+track_event(CURRENT_USER_ID, "login")
 
 
 # =========================================================
 # MAIN APP HEADER
 # =========================================================
 
-st.sidebar.write(
-    f"Signed in as {current_user.email}"
-)
+render_guide_replay_action(CURRENT_USER_ID)
+
+st.sidebar.divider()
+st.sidebar.caption("Signed in as")
+st.sidebar.text(current_user.email)
 
 if st.sidebar.button("Log out"):
     st.logout()
@@ -125,6 +129,7 @@ render_onboarding_entry(
 )
 
 apply_dashboard_styles()
+track_event(CURRENT_USER_ID, "dashboard_opened")
 
 st.title("Your financial picture")
 st.caption("A little clarity for today. A plan for what comes next.")
@@ -221,7 +226,7 @@ net_worth = (
 # =========================================================
 
 st.divider()
-st.subheader("Financial Summary")
+st.header("Financial Summary")
 
 col1, col2, col3, col4, col5, col6 = st.columns([1, 1, 1, 1, 1, 1.5])
 
@@ -229,28 +234,28 @@ with col1:
     st.metric(
         "Available Cash",
         f"€{available_cash:,.2f}",
-        help="Money currently available in your accounts and cash. Some may be set aside in funds.",
+        help="Money currently available in your accounts and cash.",
     )
 
 with col2:
     st.metric(
         "Reserved Funds",
         f"€{total_reserved_funds:,.2f}",
-        help="Money you have set aside for specific purposes. It is already part of your cash, not extra money.",
+        help="Part of your available cash assigned to specific goals.",
     )
 
 with col3:
     st.metric(
         "Free Cash",
         f"€{free_cash:,.2f}",
-        help="Your account and cash balances, minus money reserved in funds.",
+        help="Available cash that is not currently reserved for a Fund.",
     )
 
 with col4:
     st.metric(
         "Liquid Worth",
         f"€{liquid_worth:,.2f}",
-        help="Cash plus investments that can usually be converted to cash quickly. Debts and reserved funds are not subtracted here.",
+        help="Cash plus assets that can usually be converted to cash quickly.",
     )
 
 with col5:
@@ -265,14 +270,15 @@ with col6:
         st.metric(
             "Net Worth",
             f"€{net_worth:,.2f}",
-            help="Everything you own in cash and assets, minus everything you owe.",
+            help="What you own minus what you owe.",
         )
 
 
 with st.expander("Understanding your financial picture"):
     st.write(
         "Net worth brings together your cash and all your assets, then subtracts your debts. "
-        "Liquid worth focuses on cash and investments you can usually sell quickly."
+        "Liquid worth focuses on cash and investments you can usually sell quickly, "
+        "without subtracting debts or reserved funds."
     )
     st.write(
         "Funds are money set aside within your existing cash. They reduce your free cash, "
@@ -285,7 +291,7 @@ with st.expander("Understanding your financial picture"):
 # =========================================================
 
 st.divider()
-st.header("🏦 Accounts")
+st.header("Accounts")
 
 st.subheader("Add account")
 
@@ -418,7 +424,7 @@ else:
 # =========================================================
 
 st.divider()
-st.header("📈 Assets")
+st.header("Assets")
 
 st.subheader("Add asset")
 
@@ -582,7 +588,7 @@ else:
 # =========================================================
 
 st.divider()
-st.header("💳 Debts")
+st.header("Debts")
 
 st.subheader("Add debt")
 
@@ -750,12 +756,9 @@ else:
 # =========================================================
 
 st.divider()
-st.header("🎯 Virtual Funds")
+st.header("Funds")
 
-st.write(
-    "Funds are allocations of money that already exists in your bank "
-    "accounts or cash. They do not increase your net worth."
-)
+st.caption("Money you've set aside for specific goals.")
 
 
 # -----------------------------
@@ -938,7 +941,8 @@ else:
 # =========================================================
 
 st.divider()
-st.header("📅 Monthly Plan")
+st.header("Monthly Plan")
+st.caption("Decide where you want this month's income to go.")
 
 today = date.today()
 
@@ -1300,6 +1304,7 @@ else:
 
     if st.button(
         "Add allocation",
+        type="primary",
         key="add_new_allocation"
     ):
 
@@ -1778,7 +1783,7 @@ else:
                         else:
 
                             st.info(
-                                f"🎯 {linked_fund.name}"
+                                f"Fund: {linked_fund.name}"
                             )
 
                             fund_col1, fund_col2 = (
@@ -1827,7 +1832,7 @@ else:
 
                                 contribution_submitted = (
                                     st.form_submit_button(
-                                        "Record contribution"
+                                        "Record contribution", type="primary"
                                     )
                                 )
 
@@ -1983,7 +1988,7 @@ else:
                         else:
 
                             st.info(
-                                f"📈 {linked_asset.name}"
+                                f"Investment: {linked_asset.name}"
                             )
 
                             investment_col1, investment_col2 = (
@@ -2036,7 +2041,7 @@ else:
 
                                 investment_submitted = (
                                     st.form_submit_button(
-                                        "Record investment"
+                                        "Record investment", type="primary"
                                     )
                                 )
 
@@ -2160,7 +2165,7 @@ else:
 # =========================================================
 
 st.divider()
-st.header("💧 Liquidity Breakdown")
+st.header("Liquidity Breakdown")
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -2193,7 +2198,7 @@ with col4:
 # =========================================================
 
 st.divider()
-st.header("💬 Feedback")
+st.header("Feedback")
 
 st.write(
     "This app is currently in beta. "
@@ -2277,7 +2282,7 @@ if len(previous_feedback) > 0:
 
 st.divider()
 
-with st.expander("⚠️ Danger Zone | Delete data "):
+with st.expander("Delete your data"):
 
     st.warning(
         "Deleting your data will permanently remove "

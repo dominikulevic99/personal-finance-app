@@ -137,7 +137,7 @@ def render_assets_step(user_id):
                 st.session_state.pop(prefix + "asset_save_uncertain", None)
                 st.rerun()
 
-        if assets and st.button("Cancel", key=prefix + "asset_cancel"):
+        if assets and st.button("Cancel", type="tertiary", key=prefix + "asset_cancel"):
             st.session_state[form_open_key] = False
             st.rerun()
     elif assets:
@@ -152,12 +152,13 @@ def render_assets_step(user_id):
         st.caption("Only saved assets will be included. You can add more later.")
         if st.button(
             "I don't have any yet" if not assets else "Skip for now",
+            type="tertiary",
             key=prefix + "assets_skip",
         ):
             # Skipping never creates or modifies an asset, including a draft.
             st.session_state[prefix + "step"] = "debts"
             st.rerun()
 
-    if st.button("Back to Accounts", key=prefix + "assets_back"):
+    if st.button("Back to Accounts", type="tertiary", key=prefix + "assets_back"):
         st.session_state[prefix + "step"] = "accounts"
         st.rerun()

@@ -91,7 +91,7 @@ def render_accounts_step(user_id):
                 st.session_state.pop(prefix + "account_save_uncertain", None)
                 st.rerun()
 
-        if accounts and st.button("Cancel", key=prefix + "account_cancel"):
+        if accounts and st.button("Cancel", type="tertiary", key=prefix + "account_cancel"):
             st.session_state[form_open_key] = False
             st.rerun()
     elif accounts:

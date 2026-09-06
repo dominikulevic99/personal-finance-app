@@ -114,7 +114,7 @@ def render_funds_step(user_id):
                 st.session_state.pop(prefix + "fund_save_uncertain", None)
                 st.rerun()
 
-        if funds and st.button("Cancel", key=prefix + "fund_cancel"):
+        if funds and st.button("Cancel", type="tertiary", key=prefix + "fund_cancel"):
             st.session_state[form_open_key] = False
             st.rerun()
     elif funds:
@@ -127,10 +127,10 @@ def render_funds_step(user_id):
 
     if form_open:
         st.caption("Only saved funds will be included. You can add a goal later.")
-        if st.button("Skip for now", key=prefix + "funds_skip"):
+        if st.button("Skip for now", type="tertiary", key=prefix + "funds_skip"):
             st.session_state[prefix + "step"] = "monthly_plan"
             st.rerun()
 
-    if st.button("Back to Debts", key=prefix + "funds_back"):
+    if st.button("Back to Debts", type="tertiary", key=prefix + "funds_back"):
         st.session_state[prefix + "step"] = "debts"
         st.rerun()

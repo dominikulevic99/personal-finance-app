@@ -127,7 +127,7 @@ def render_debts_step(user_id):
                 st.session_state.pop(prefix + "debt_save_uncertain", None)
                 st.rerun()
 
-        if debts and st.button("Cancel", key=prefix + "debt_cancel"):
+        if debts and st.button("Cancel", type="tertiary", key=prefix + "debt_cancel"):
             st.session_state[form_open_key] = False
             st.rerun()
     elif debts:
@@ -142,11 +142,12 @@ def render_debts_step(user_id):
         st.caption("Only saved debts will be included. You can add more later.")
         if st.button(
             "I don't have any debt" if not debts else "Skip for now",
+            type="tertiary",
             key=prefix + "debts_skip",
         ):
             st.session_state[prefix + "step"] = "funds"
             st.rerun()
 
-    if st.button("Back to Assets", key=prefix + "debts_back"):
+    if st.button("Back to Assets", type="tertiary", key=prefix + "debts_back"):
         st.session_state[prefix + "step"] = "assets"
         st.rerun()

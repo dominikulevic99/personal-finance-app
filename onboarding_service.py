@@ -28,11 +28,14 @@ def has_financial_data(user_id):
 
 
 def get_entry_route(
-    user_id, started=False, dashboard_requested=False, force_welcome=False
+    user_id, started=False, dashboard_requested=False, force_welcome=False,
+    replay_requested=False,
 ):
     """Explicit session choices take precedence over data-based routing."""
     if dashboard_requested:
         return "dashboard"
+    if replay_requested:
+        return "welcome"
     if started:
         return "started"
     if force_welcome:

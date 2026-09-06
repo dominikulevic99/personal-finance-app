@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from html import escape
 
 import streamlit as st
-from visual_styles import PALETTE_CSS, BUTTON_CSS, FORM_CSS
+from visual_styles import PALETTE_CSS, BUTTON_CSS, FORM_CSS, LAYOUT_CSS
 
 
 # Scope styles to Streamlit's public container-key class. Dashboard styles
@@ -32,7 +32,7 @@ ONBOARDING_CSS = """
     line-height: 1.12;
     max-width: 650px;
     padding: 0;
-    margin: 1.8rem 0 1rem;
+    margin: 1.35rem 0 .75rem;
 }
 .st-key-onboarding_shell .onboarding-eyebrow {
     color: var(--finance-accent);
@@ -115,7 +115,8 @@ ONBOARDING_CSS = """
     flex-shrink: 0;
 }
 @media (max-width: 640px) {
-    .st-key-onboarding_shell { margin-top: 0; border-radius: 20px; }
+    .st-key-onboarding_shell { margin: 0 auto 1.5rem; padding: 1rem; border-radius: 20px; }
+    .st-key-onboarding_shell h1 { font-size: 1.85rem; }
     .st-key-onboarding_shell .onboarding-cards { grid-template-columns: 1fr; }
 }
 </style>
@@ -130,7 +131,7 @@ def onboarding_shell(step=None, encouragement="A little clarity starts here.", c
     """
     if step is not None and (isinstance(step, bool) or not isinstance(step, int) or not 1 <= step <= 5):
         raise ValueError("Onboarding step must be an integer from 1 to 5.")
-    st.html(PALETTE_CSS + ONBOARDING_CSS + BUTTON_CSS + FORM_CSS)
+    st.html(PALETTE_CSS + LAYOUT_CSS + ONBOARDING_CSS + BUTTON_CSS + FORM_CSS)
     with st.container(key="onboarding_shell"):
         label = "Setup complete" if complete else "Your financial plan" if step is None else f"Step {step} of 5"
         # The bar represents steps completed before the current screen.
