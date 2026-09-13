@@ -32,10 +32,9 @@ def render_assets_step(user_id):
     form_open_key = prefix + "asset_form_open"
     form_version_key = prefix + "asset_form_version"
 
-    st.title("Do you own any investments or other assets?")
+    st.title("Now add what you own beyond cash.")
     st.write(
-        "This could be investments, property or other valuable assets "
-        "you want included in your financial picture."
+        "Investments, property and other assets complete the picture of what you own."
     )
     st.caption("Use a name and estimated value. Leave out money already listed in your accounts.")
 

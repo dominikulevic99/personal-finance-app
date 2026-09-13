@@ -11,8 +11,8 @@ def render_accounts_step(user_id):
     form_open_key = prefix + "account_form_open"
     form_version_key = prefix + "account_form_version"
 
-    st.title("Where is your money today?")
-    st.write("Add the places where you currently keep money.")
+    st.title("Start with the money you can access today.")
+    st.write("Add where your available cash sits, using a familiar name and current balance.")
     st.caption("For example: Revolut, Swedbank, Cash or Everyday account.")
     st.info(
         "Only enter a name you recognize and the current balance. Never enter "

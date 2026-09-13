@@ -49,13 +49,13 @@ def render_financial_picture(user_id, *, track_completion=True):
     st.html(PICTURE_CSS)
     with st.container(key="financial_picture"):
         st.title("Your financial picture is ready.")
-        st.write("Here's where you stand today.")
+        st.write("What you have, what's reserved, and what's free to use.")
         st.caption("A snapshot of the information you have saved. You can update it as life changes.")
 
         with st.container(key="picture_net_worth"):
             st.metric(
                 "Net worth", f"€{summary['net_worth']:,.2f}",
-                help="What you own minus what you owe.",
+                help="Your cash and assets, minus what you owe.",
             )
         if summary["net_worth"] > 0:
             st.caption("Based on your saved figures, what you own is worth more than what you owe.")
@@ -64,18 +64,20 @@ def render_financial_picture(user_id, *, track_completion=True):
         else:
             st.caption("Your saved cash and asset values balance out your recorded debts.")
 
-        cash_col, debt_col, funds_col = st.columns(3)
+        cash_col, funds_col, free_col = st.columns(3)
         with cash_col:
             st.metric("Available cash", f"€{summary['available_cash']:,.2f}",
                       help="Money currently available in your accounts and cash.")
-        with debt_col:
-            st.metric("Debt", f"€{summary['total_debt']:,.2f}", help="The total amount you still owe.")
         with funds_col:
-            st.metric("Set aside in funds", f"€{summary['reserved_funds']:,.2f}",
+            st.metric("Reserved Funds", f"€{summary['reserved_funds']:,.2f}",
                       help="Part of your available cash assigned to specific goals.")
-        st.caption("Funds reserve existing cash; they are not additional wealth.")
+        with free_col:
+            st.metric("Free Cash", f"€{summary['free_cash']:,.2f}",
+                      help="Cash not reserved for Funds. This does not subtract monthly planned expenses.")
+        st.caption("Funds reserve part of your cash. Free Cash is what remains unassigned.")
 
-        with st.expander("Your assets, by how readily available they are"):
+        with st.expander("Your assets and debts"):
+            st.metric("Debt", f"€{summary['total_debt']:,.2f}", help="The total amount you still owe.")
             liquid_col, semi_col, non_col = st.columns(3)
             with liquid_col:
                 st.metric("Liquid investments", f"€{summary['liquid_investments']:,.2f}",

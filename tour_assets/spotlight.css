@@ -1,0 +1,34 @@
+/* Scoped inside the component's shadow root. No dashboard style changes. */
+.tour-overlay {
+    position: fixed; inset: 0; width: 100vw; height: 100dvh;
+    max-width: none; max-height: none; margin: 0; padding: 0;
+    border: 0; background: transparent; overflow: hidden;
+    color: #29332e; font-family: ui-sans-serif, system-ui, sans-serif;
+}
+.tour-overlay::backdrop { background: transparent; }
+.tour-spotlight {
+    position: fixed; pointer-events: none; border-radius: 14px;
+    outline: 2px solid #779481;
+    box-shadow: 0 0 0 200vmax rgb(24 33 27 / 58%);
+}
+.tour-overlay[data-missing="true"] { background: rgb(24 33 27 / 58%); }
+.tour-overlay[data-missing="true"] .tour-spotlight { display: none; }
+.tour-card {
+    position: fixed; box-sizing: border-box; width: min(360px, calc(100vw - 24px));
+    max-height: calc(100dvh - 24px); overflow: auto;
+    background: #fffdf8; border: 1px solid #dce2d8; border-radius: 18px;
+    padding: 18px; box-shadow: 0 12px 40px rgb(24 33 27 / 20%);
+}
+.tour-card h2 { margin: 12px 0; font-size: 1.2rem; line-height: 1.3; }
+.tour-card p { margin: 0 0 14px; font-size: .95rem; line-height: 1.5; }
+.tour-top, .tour-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.tour-top { justify-content: space-between; color: #536158; font-size: .8rem; }
+.tour-actions { justify-content: flex-end; }
+.tour-card button {
+    font: inherit; min-height: 44px; padding: 8px 12px; border-radius: 10px;
+    border: 1px solid #dce2d8; background: transparent; color: #29332e; cursor: pointer;
+}
+.tour-card button.primary { background: #456750; color: #fff; border-color: #456750; }
+.tour-card button:disabled { opacity: .45; cursor: default; }
+.tour-card button:focus-visible { outline: 3px solid #779481; outline-offset: 2px; }
+.tour-card .tour-warning { font-size: .85rem; color: #536158; }

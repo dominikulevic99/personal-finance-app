@@ -64,6 +64,8 @@ from user_data import delete_all_user_data
 from onboarding import render_onboarding_entry, render_guide_replay_action
 from analytics import track_event
 from monthly_checkin import render_monthly_checkin
+from dashboard_navigation import render_section_links, render_guide_action
+from dashboard_tour import render_tour
 from fund_progress import fund_progress_card
 from visual_styles import apply_dashboard_styles
 
@@ -114,14 +116,22 @@ track_event(CURRENT_USER_ID, "login")
 # MAIN APP HEADER
 # =========================================================
 
+navigation_slot = st.sidebar.container()
+help_slot = st.sidebar.container()
+with help_slot:
+    st.caption("Get more from the app")
+    guide_slot = st.container()
 render_guide_replay_action(CURRENT_USER_ID)
+feedback_slot = st.sidebar.container()
 
 st.sidebar.divider()
+st.sidebar.caption("Account")
 st.sidebar.caption("Signed in as")
 st.sidebar.text(current_user.email)
 
-if st.sidebar.button("Log out"):
+if st.sidebar.button("Log out", type="tertiary"):
     st.logout()
+danger_slot = st.sidebar.container()
 
 
 # Development override: show Welcome for this tester without resetting their data.
@@ -131,11 +141,19 @@ render_onboarding_entry(
 )
 
 apply_dashboard_styles()
+with navigation_slot:
+    render_section_links()
+with guide_slot:
+    render_guide_action(CURRENT_USER_ID)
+with feedback_slot:
+    st.markdown('[Send feedback](#feedback "Tell us what\'s missing or confusing.")')
+with danger_slot:
+    st.divider()
+    st.caption("[Delete my data](#delete-my-data)")
 track_event(CURRENT_USER_ID, "dashboard_opened")
 
 st.title("Your financial picture")
-st.caption("A little clarity for today. A plan for what comes next.")
-render_monthly_checkin(CURRENT_USER_ID)
+st.caption("Your whole financial picture, made clear.")
 
 
 # =========================================================
@@ -229,53 +247,54 @@ net_worth = (
 # =========================================================
 
 st.divider()
-st.header("Financial Summary")
+with st.container(key="tour_summary"):
+    st.header("Financial Summary", anchor="overview")
 
-col1, col2, col3, col4, col5, col6 = st.columns([1, 1, 1, 1, 1, 1.5])
-
-with col1:
-    st.metric(
-        "Available Cash",
-        f"€{available_cash:,.2f}",
-        help="Money currently available in your accounts and cash.",
-    )
-
-with col2:
-    st.metric(
-        "Reserved Funds",
-        f"€{total_reserved_funds:,.2f}",
-        help="Part of your available cash assigned to specific goals.",
-    )
-
-with col3:
-    st.metric(
-        "Free Cash",
-        f"€{free_cash:,.2f}",
-        help="Available cash that is not currently reserved for a Fund.",
-    )
-
-with col4:
-    st.metric(
-        "Liquid Worth",
-        f"€{liquid_worth:,.2f}",
-        help="Cash plus assets that can usually be converted to cash quickly.",
-    )
-
-with col5:
-    st.metric(
-        "Total Debt",
-        f"€{total_debt:,.2f}",
-        help="The total amount you still owe across your debts.",
-    )
-
-with col6:
     with st.container(key="net_worth"):
         st.metric(
-            "Net Worth",
-            f"€{net_worth:,.2f}",
-            help="What you own minus what you owe.",
+            "Net Worth", f"€{net_worth:,.2f}",
+            help="Your cash and assets, minus what you owe.",
         )
 
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            "Available Cash",
+            f"€{available_cash:,.2f}",
+            help="Money currently available in your accounts and cash.",
+        )
+
+    with col2:
+        st.metric(
+            "Reserved Funds",
+            f"€{total_reserved_funds:,.2f}",
+            help="Part of your available cash assigned to specific goals.",
+        )
+
+    with col3:
+        st.metric(
+            "Free Cash",
+            f"€{free_cash:,.2f}",
+            help="Cash not reserved for Funds. This does not subtract monthly planned expenses.",
+        )
+
+    st.caption("Funds reserve part of your cash. Free Cash is what remains unassigned.")
+    col4, col5 = st.columns(2)
+
+    with col4:
+        st.metric(
+            "Liquid Worth",
+            f"€{liquid_worth:,.2f}",
+            help="Cash plus assets that can usually be converted to cash quickly.",
+        )
+
+    with col5:
+        st.metric(
+            "Total Debt",
+            f"€{total_debt:,.2f}",
+            help="The total amount you still owe across your debts.",
+        )
 
 with st.expander("Understanding your financial picture"):
     st.write(
@@ -293,8 +312,10 @@ with st.expander("Understanding your financial picture"):
 # 6. ACCOUNTS
 # =========================================================
 
+render_monthly_checkin(CURRENT_USER_ID)
+
 st.divider()
-st.header("Accounts")
+st.header("Accounts", anchor="accounts")
 
 st.subheader("Add account")
 
@@ -427,7 +448,7 @@ else:
 # =========================================================
 
 st.divider()
-st.header("Assets")
+st.header("Assets", anchor="assets")
 
 st.subheader("Add asset")
 
@@ -591,7 +612,7 @@ else:
 # =========================================================
 
 st.divider()
-st.header("Debts")
+st.header("Debts", anchor="debts")
 
 st.subheader("Add debt")
 
@@ -759,9 +780,10 @@ else:
 # =========================================================
 
 st.divider()
-st.header("Funds")
+with st.container(key="tour_funds"):
+    st.header("Funds", anchor="funds")
 
-st.caption("Money you've set aside for specific goals.")
+    st.caption("Money you've set aside for specific goals.")
 
 
 # -----------------------------
@@ -825,6 +847,7 @@ if fund_submitted:
 # -----------------------------
 
 st.subheader("Your funds")
+st.caption("Money you've already given a purpose.")
 
 if len(funds) == 0:
 
@@ -923,8 +946,9 @@ else:
 # =========================================================
 
 st.divider()
-st.header("Monthly Plan")
-st.caption("Decide where you want this month's income to go.")
+with st.container(key="tour_monthly_plan"):
+    st.header("Monthly Plan", anchor="monthly-plan")
+    st.caption("Decide where you want this month's income to go.")
 
 today = date.today()
 
@@ -1600,18 +1624,22 @@ else:
                     )
 
                     st.caption(
-                        "Actual amount is calculated "
-                        "from recorded transactions."
+                        "Actual contributions are shown here. Use Confirm contribution below "
+                        "to record a new contribution; saving plan changes does not contribute money."
                     )
 
                 else:
 
                     new_actual_amount = st.number_input(
-                        "Actual amount (€)",
+                        "Actually spent this month (€)" if item.category_type == "EXPENSE" else "Actual amount this month (€)",
                         min_value=0.0,
                         value=stored_actual,
                         step=50.0,
                         key=f"plan_item_actual_{item.id}"
+                    )
+                    st.caption(
+                        "Enter the total for this allocation for the month, not an additional amount. "
+                        "Recording it also saves any allocation edits above. Account balances stay unchanged."
                     )
 
                 # -------------------------------------------------
@@ -1638,7 +1666,7 @@ else:
                 else:
 
                     st.success(
-                        "Actual amount matches the plan."
+                        "Recorded actual amount matches the plan."
                     )
 
                 # =================================================
@@ -1652,7 +1680,10 @@ else:
                 with allocation_col1:
 
                     if st.button(
-                        "Save allocation",
+                        "Save plan changes" if item.category_type in ("FUND", "INVESTMENT") else (
+                            "Record actual spending" if item.category_type == "EXPENSE" else "Record actual amount"
+                        ),
+                        type="primary",
                         key=f"save_plan_item_{item.id}"
                     ):
 
@@ -1703,7 +1734,8 @@ else:
                             )
 
                             st.success(
-                                "Allocation updated."
+                                "Plan changes saved." if item.category_type in ("FUND", "INVESTMENT")
+                                else "Actual amount and allocation changes saved. Account balances are unchanged."
                             )
 
                             st.rerun()
@@ -1736,6 +1768,10 @@ else:
 
                     st.subheader(
                         "Actual Fund Contribution"
+                    )
+                    st.caption(
+                        "Confirm only a new contribution you actually made. This adds to the Fund balance; "
+                        "it does not transfer money or update your bank account balance."
                     )
 
                     if item.fund_id is None:
@@ -1815,7 +1851,7 @@ else:
 
                                 contribution_submitted = (
                                     st.form_submit_button(
-                                        "Record contribution", type="primary"
+                                        "Confirm contribution", type="primary"
                                     )
                                 )
 
@@ -1943,6 +1979,10 @@ else:
                     st.subheader(
                         "Actual Investment Contribution"
                     )
+                    st.caption(
+                        "Confirm only a new contribution you actually made. This adds to the Investment value; "
+                        "it does not transfer money or update your bank account balance."
+                    )
 
                     if item.asset_id is None:
 
@@ -2025,7 +2065,7 @@ else:
 
                                 investment_submitted = (
                                     st.form_submit_button(
-                                        "Record investment", type="primary"
+                                        "Confirm contribution", type="primary"
                                     )
                                 )
 
@@ -2183,7 +2223,7 @@ with col4:
 # =========================================================
 
 st.divider()
-st.header("Feedback")
+st.header("Feedback", anchor="feedback")
 
 st.write(
     "This app is currently in beta. "
@@ -2267,6 +2307,7 @@ if len(previous_feedback) > 0:
 
 st.divider()
 
+st.html('<div id="delete-my-data"></div>')
 with st.expander("Delete your data"):
 
     st.warning(
@@ -2320,3 +2361,7 @@ with st.expander("Delete your data"):
             )
 
             st.rerun()
+
+
+# Mount only after dashboard targets exist; no onboarding or financial side effects.
+render_tour(CURRENT_USER_ID)

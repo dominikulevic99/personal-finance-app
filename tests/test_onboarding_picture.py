@@ -76,7 +76,7 @@ class FinancialPictureTests(unittest.TestCase):
         self.analytics.assert_called_once_with(7, "onboarding_completed", session_state=self.ui.session_state)
         self.assertEqual(self.ui.metrics, {
             "Net worth": "€87,500.00", "Available cash": "€2,500.00",
-            "Debt": "€20,000.00", "Set aside in funds": "€500.00",
+            "Debt": "€20,000.00", "Reserved Funds": "€500.00", "Free Cash": "€2,000.00",
             "Liquid investments": "€4,000.00", "Semi-liquid assets": "€1,000.00",
             "Non-liquid assets": "€100,000.00", "Expected income": "€2,500.00",
             "Planned allocations": "€2,300.00", "Unallocated": "€200.00",
@@ -129,7 +129,7 @@ class FinancialPictureTests(unittest.TestCase):
         self.funds.clear()
         picture_ui.render_financial_picture(7)
         self.assertEqual(self.ui.metrics["Net worth"], "€0.00")
-        self.assertEqual(self.ui.metrics["Set aside in funds"], "€0.00")
+        self.assertEqual(self.ui.metrics["Reserved Funds"], "€0.00")
         self.assertFalse(self.ui.errors)
 
     def test_negative_values_are_not_hidden_or_judged(self):

@@ -18,9 +18,10 @@ def render_guide_replay_action(user_id):
     """Voluntary navigation only; financial records and draft inputs stay intact."""
     prefix = f"onboarding_{user_id}_"
     if st.sidebar.button(
-        "Repeat setup guide",
+        "Repeat setup",
+        type="tertiary",
         key=prefix + "replay",
-        help="Walk through the guide again using your saved information. Nothing is deleted.",
+        help="Review your setup again. Your existing data stays intact.",
     ):
         st.session_state[prefix + "replay_welcome"] = True
         st.session_state[prefix + "replay_mode"] = True
@@ -76,7 +77,7 @@ def render_onboarding_entry(user_id, force_welcome=False):
             track_event(user_id, "onboarding_step_viewed", step, session_state=st.session_state)
         if route == "welcome":
             render_welcome_content()
-            if st.button("Build my financial plan", type="primary", key=prefix + "start"):
+            if st.button("Build my financial picture", type="primary", key=prefix + "start"):
                 st.session_state[started_key] = True
                 st.session_state[prefix + "replay_welcome"] = False
                 st.session_state[prefix + "step"] = "accounts"

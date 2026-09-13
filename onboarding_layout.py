@@ -151,23 +151,28 @@ def onboarding_shell(step=None, encouragement="A little clarity starts here.", c
 def render_welcome_content():
     """Static, illustrative content: no sample balances or financial claims."""
     st.html("""
-        <h1>Take control of your money.</h1>
-        <p class="onboarding-lead">See what you own, what you owe and where your money should go next.</p>
+        <h1>Know what you have. Know what it's for.</h1>
+        <p class="onboarding-lead">Your whole financial picture, made clear.<br>Go beyond seeing the numbers. Understand your money and what to do next.</p>
         <div class="onboarding-cards">
             <section class="onboarding-card">
-                <h2>A simple place to begin</h2>
+                <h2>What you have—and what you owe</h2>
                 <ul>
-                    <li>No bank connection required</li>
-                    <li>Manual and private by design</li>
-                    <li>Never enter card numbers, PINs or banking credentials</li>
-                    <li>Takes only a few minutes to get started</li>
+                    <li>See your cash, investments and other assets</li>
+                    <li>Bring what you owe into the picture</li>
+                    <li>Understand your net worth: what you own minus what you owe</li>
                 </ul>
             </section>
             <section class="onboarding-card onboarding-path">
-                <h2>Your money, with a little more clarity</h2>
-                <div class="onboarding-path-row"><span class="onboarding-dot" aria-hidden="true">1</span>See where you are today</div>
-                <div class="onboarding-path-row"><span class="onboarding-dot" aria-hidden="true">2</span>Make room for what matters</div>
-                <div class="onboarding-path-row"><span class="onboarding-dot" aria-hidden="true">3</span>Plan your next month</div>
+                <h2>What your money is for</h2>
+                <ul>
+                    <li>Reserve cash for goals like travel or an emergency buffer</li>
+                    <li>See what remains unassigned</li>
+                    <li>Plan where this month's income should go</li>
+                </ul>
             </section>
         </div>
     """)
+    st.caption(
+        "Setup takes only a few minutes. You enter and update your figures manually. "
+        "No bank connection required. Never enter card numbers, PINs or banking credentials."
+    )

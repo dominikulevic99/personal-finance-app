@@ -41,19 +41,22 @@ def render_fund_progress(balance, target):
 @contextmanager
 def fund_progress_card(user_id, fund):
     """One native reveal control containing the saved goal summary and edits."""
-    amounts, detail = goal_progress_copy(fund.current_balance, fund.target_amount)
+    _, detail = goal_progress_copy(fund.current_balance, fund.target_amount)
     current, goal = _number(fund.current_balance), _number(fund.target_amount)
     fraction = None
     if current is not None and goal is not None and current >= 0 and goal > 0:
         fraction = float(min(current / goal, Decimal(1)))
     # Fund names are user text, not Markdown formatting or links.
     name = re.sub(r'([\\`*_{}\[\]()#+.!|>~-])', r'\\\1', ' '.join(fund.name.split()))
+    status = "No target set" if fund.target_amount is None or goal == 0 else "Progress unavailable"
     if ' · ' in detail:
-        percentage, detail = detail.split(' · ', 1)
-        name += f" · {percentage}"
-    label = f"{name}  \n{amounts}  \n{detail}"
+        status, detail = detail.split(' · ', 1)
+    saved = f"€{current:,.2f} saved" if current is not None else "Balance unavailable"
+    label = f"**{name}** *{status}*  \n{saved}"
     key = f"fund_goal_{int(user_id)}_{int(fund.id)}"
     st.html(fund_card_style(key, fraction))
     with st.container(key=key):
         with st.expander(label):
+            if fraction is not None:
+                st.caption(detail)
             yield

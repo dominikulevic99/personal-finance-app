@@ -15,7 +15,7 @@ def fund_card_style(key, fraction):
         background-image: linear-gradient(var(--finance-accent), var(--finance-accent)),
                           linear-gradient(var(--finance-border), var(--finance-border));
         background-size: {percentage}% 4px, 100% 4px;
-        background-position: left bottom;
+        background-position: left center;
         background-repeat: no-repeat;
         """
     return f"""<style>
@@ -26,14 +26,38 @@ def fund_card_style(key, fraction):
         overflow: hidden;
     }}
     .st-key-{key} [data-testid="stExpander"] summary {{
-        padding: .75rem 1rem 1rem;
-        {bar}
+        padding: .45rem .85rem;
     }}
     .st-key-{key} summary [data-testid="stMarkdownContainer"] p {{
         white-space: normal;
         overflow-wrap: anywhere;
         line-height: 1.5;
         margin: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: .25rem .75rem;
+        color: var(--finance-muted);
+        font-size: .85rem;
+    }}
+    .st-key-{key} summary [data-testid="stMarkdownContainer"] {{ width: 100%; }}
+    .st-key-{key} summary p strong {{
+        grid-area: 1 / 1;
+        color: var(--finance-text);
+        font-size: .95rem;
+        font-weight: 600;
+    }}
+    .st-key-{key} summary p em {{
+        grid-area: 1 / 2;
+        font-style: normal;
+        text-align: right;
+    }}
+    .st-key-{key} summary p br {{ display: none; }}
+    .st-key-{key} summary p::after {{
+        content: "";
+        grid-area: 2 / 1 / 3 / -1;
+        height: {"4px" if fraction is not None else "0"};
+        border-radius: 4px;
+        {bar}
     }}
     </style>"""
 
@@ -278,6 +302,58 @@ PICTURE_CSS = """
 """
 
 
+SIDEBAR_CSS = """
+<style>
+/* Only sidebar navigation links; preserve links and controls in the dashboard. */
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] a[href^="#"] {
+    display: block;
+    box-sizing: border-box;
+    padding: .45rem .65rem;
+    min-height: 40px;
+    border-radius: 9px;
+    color: var(--finance-text);
+    text-decoration: none;
+    font-weight: 400;
+    line-height: 1.5;
+}
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] a[href^="#"]:visited {
+    color: var(--finance-text);
+}
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] a[href^="#"]:hover {
+    color: var(--finance-accent);
+    background: #edf1e7;
+    text-decoration: none;
+}
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] a[href^="#"]:focus-visible {
+    outline: 2px solid var(--finance-accent);
+    outline-offset: 2px;
+    text-decoration: none;
+}
+[data-testid="stSidebar"] [data-testid="stButton"] button[kind="tertiary"] {
+    padding: .45rem .65rem;
+    min-height: 40px;
+    border: 0;
+    border-radius: 9px;
+    color: var(--finance-text);
+    font-weight: 400;
+}
+[data-testid="stSidebar"] [data-testid="stButton"] button[kind="tertiary"]:hover {
+    background: #edf1e7;
+    color: var(--finance-accent);
+    filter: none;
+}
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
+    color: var(--finance-muted);
+}
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] a[href="#delete-my-data"],
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] a[href="#delete-my-data"]:visited {
+    color: #825e56;
+    font-size: .85rem;
+}
+</style>
+"""
+
+
 def apply_dashboard_styles():
     """Called only after onboarding routing has returned to the dashboard."""
-    st.html(PALETTE_CSS + BUTTON_CSS + DASHBOARD_CSS + LAYOUT_CSS + FORM_CSS)
+    st.html(PALETTE_CSS + BUTTON_CSS + DASHBOARD_CSS + LAYOUT_CSS + FORM_CSS + SIDEBAR_CSS)

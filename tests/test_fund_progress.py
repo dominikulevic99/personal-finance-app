@@ -12,7 +12,8 @@ class FundProgressTests(unittest.TestCase):
         with patch('fund_progress.st', ui):
             with fund_progress_card(7, fund):
                 ui.text_input('Fund name')
-        ui.expander.assert_called_once_with('Japan Trip · 53.3%  \n€800.00 / €1,500.00  \n€700.00 to go')
+        ui.expander.assert_called_once_with('**Japan Trip** *53.3%*  \n€800.00 saved')
+        ui.caption.assert_called_once_with('€700.00 to go')
         ui.container.assert_called_once_with(key='fund_goal_7_2')
         ui.text_input.assert_called_once()
 

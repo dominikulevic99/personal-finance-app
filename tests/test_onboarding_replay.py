@@ -46,7 +46,7 @@ class GuideReplayTests(unittest.TestCase):
             pass
 
     def replay(self, user_id=7):
-        self.ui.click = "Repeat setup guide"
+        self.ui.click = "Repeat setup"
         try:
             onboarding.render_guide_replay_action(user_id)
         except Rerun:
@@ -95,7 +95,7 @@ class GuideReplayTests(unittest.TestCase):
     def test_start_replay_uses_accounts_without_reclassifying_user(self):
         self.replay()
         self.assertNotIn("onboarding_7_started", self.ui.session_state)
-        self.ui.click = "Build my financial plan"
+        self.ui.click = "Build my financial picture"
         self.render()
         self.ui.click = None
         self.render()

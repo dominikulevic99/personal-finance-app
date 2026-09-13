@@ -178,8 +178,8 @@ def render_monthly_plan_step(user_id):
     year, month = st.session_state.setdefault(user_prefix + "plan_month", (today.year, today.month))
     prefix = user_prefix + f"plan_{year}_{month}_"
 
-    st.title("Give this month's money a job.")
-    st.write("Start with your expected income, then decide how much you want to keep for living costs, saving and investing.")
+    st.title("Decide what this month's money should do.")
+    st.write("Give your expected income direction before everyday spending takes over. Planning does not change your balances.")
     st.caption(f"Plan for {date(year, month, 1).strftime('%B %Y')}")
     _render_explanation()
 

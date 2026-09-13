@@ -21,10 +21,9 @@ def render_debts_step(user_id):
     form_open_key = prefix + "debt_form_open"
     form_version_key = prefix + "debt_form_version"
 
-    st.title("Do you currently owe money?")
+    st.title("What you own is only half the picture.")
     st.write(
-        "Add loans, credit balances or money you owe that should be included "
-        "in your financial picture."
+        "Add what you owe to see your net worth: what you own minus your debts."
     )
     st.caption(
         "Use a name you recognize and amounts only. Never enter card numbers, "

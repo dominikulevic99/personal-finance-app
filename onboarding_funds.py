@@ -14,10 +14,10 @@ def render_funds_step(user_id):
     form_open_key = prefix + "fund_form_open"
     form_version_key = prefix + "fund_form_version"
 
-    st.title("Give your savings a purpose.")
+    st.title("Now give some of your money a purpose.")
     st.write(
-        "Not all money in your bank account is really available to spend. "
-        "Funds let you reserve part of your existing cash for things you care about."
+        "Your bank balance tells you how much is there. Funds reserve existing cash "
+        "for goals, helping you see what's still free."
     )
     with st.container(border=True):
         st.caption("Example — not your balances")
@@ -72,7 +72,8 @@ def render_funds_step(user_id):
             ):
                 st.session_state[show_all_key] = not show_all
                 st.rerun()
-            st.caption(f"Showing {len(funds) if show_all else 3} of {len(funds)} funds")
+            st.caption(
+                f"Showing {len(funds) if show_all else 3} of {len(funds)} funds")
         for fund in (funds if show_all else funds[:3]):
             with st.container(border=True):
                 st.text(fund.name)

@@ -17,8 +17,8 @@ RETURN_COPY = (
 
 def render_monthly_checkin(user_id):
     today = date.today()
-    with st.container(border=True):
-        st.subheader("This month")
+    with st.container(border=True, key="tour_checkin"):
+        st.subheader("This month", anchor="monthly-check-in")
         try:
             plan = get_monthly_plan(user_id, today.year, today.month)
             transactions = [] if plan is None else get_transactions_for_month(user_id, plan.id)
