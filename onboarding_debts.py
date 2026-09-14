@@ -1,18 +1,19 @@
 """Step 3 presentation using the existing debt fields and database functions."""
 
 import streamlit as st
+from i18n import t, TranslatedLabels, month_period
 
 from debts import add_debt, get_debts
 
 
 # Friendly labels only; keys match the existing dashboard categories.
-DEBT_TYPES = {
-    "MORTGAGE": "Home loan / mortgage",
-    "CAR_LOAN": "Car loan",
-    "PERSONAL_LOAN": "Personal loan",
-    "CREDIT_CARD": "Credit card balance",
-    "OTHER": "Other money I owe",
-}
+DEBT_TYPES = TranslatedLabels({
+    "MORTGAGE": 'ui.home_loan_mortgage',
+    "CAR_LOAN": 'ui.car_loan',
+    "PERSONAL_LOAN": 'ui.personal_loan',
+    "CREDIT_CARD": 'ui.credit_card_balance',
+    "OTHER": 'ui.other_money_i_owe',
+})
 
 
 def render_debts_step(user_id):
@@ -21,34 +22,33 @@ def render_debts_step(user_id):
     form_open_key = prefix + "debt_form_open"
     form_version_key = prefix + "debt_form_version"
 
-    st.title("What you own is only half the picture.")
+    st.title(t('ui.what_you_own_is_only_half_the_picture'))
     st.write(
-        "Add what you owe to see your net worth: what you own minus your debts."
+        t('ui.add_what_you_owe_to_see_your_net_worth_what')
     )
     st.caption(
-        "Use a name you recognize and amounts only. Never enter card numbers, "
-        "account numbers, PINs, passwords or banking credentials."
+        t('ui.use_a_name_you_recognize_and_amounts_only_never_enter')
     )
 
     try:
         debts = get_debts(user_id)
     except Exception:
-        st.error("We couldn't load your debts. Please try again.")
-        if st.button("Retry", key=prefix + "debts_retry"):
+        st.error(t('ui.we_couldn_t_load_your_debts_please_try_again'))
+        if st.button(t('ui.retry'), key=prefix + "debts_retry"):
             st.rerun()
         return
 
     if st.session_state.pop(prefix + "debt_saved", False):
-        st.success("Debt added to your financial picture.")
+        st.success(t('ui.debt_added_to_your_financial_picture'))
 
     if debts:
-        st.subheader("Your debts")
+        st.subheader(t('ui.your_debts'))
         for debt in debts:
             with st.container(border=True):
                 st.text(debt.name)
                 st.caption(
-                    f"{debt.remaining_balance:,.2f} {debt.currency} remaining · "
-                    f"{DEBT_TYPES.get(debt.debt_type, 'Debt')}"
+                    t("debts.remaining", amount=f"{debt.remaining_balance:,.2f}", currency=debt.currency,
+                      kind=DEBT_TYPES.get(debt.debt_type, t('ui.debt')))
                 )
 
     form_open = st.session_state.get(form_open_key, not debts)
@@ -56,55 +56,55 @@ def render_debts_step(user_id):
         draft_prefix = prefix + f"debt_draft_{st.session_state.get(form_version_key, 0)}_"
         with st.form(draft_prefix + "form"):
             name = st.text_input(
-                "Debt name", placeholder="e.g. Money borrowed from Jonas", key=draft_prefix + "name"
+                t('ui.debt_name'), placeholder=t('ui.e_g_money_borrowed_from_jonas'), key=draft_prefix + "name"
             )
             remaining_balance = st.number_input(
-                "Amount you still owe (EUR)",
+                t('ui.amount_you_still_owe_eur'),
                 min_value=0.0,
                 value=None,
                 step=100.0,
-                placeholder="e.g. 500",
-                help="Enter what is left to repay, rather than the original amount borrowed.",
+                placeholder=t('ui.e_g_500'),
+                help=t('ui.enter_what_is_left_to_repay_rather_than_the_original'),
                 key=draft_prefix + "balance",
             )
             debt_type = st.selectbox(
-                "What kind of debt is it?",
+                t('ui.what_kind_of_debt_is_it'),
                 options=list(DEBT_TYPES),
                 index=None,
-                placeholder="Choose a kind of debt",
-                format_func=DEBT_TYPES.get,
-                help="For informal borrowing, such as money owed to a friend, choose Other money I owe.",
+                placeholder=t('ui.choose_a_kind_of_debt'),
+                format_func=DEBT_TYPES.formatter(),
+                help=t('ui.for_informal_borrowing_such_as_money_owed_to_a_friend'),
                 key=draft_prefix + "type",
             )
-            with st.expander("Payment and interest"):
-                st.caption("Both start at 0. Set them here if you make regular payments or pay interest.")
+            with st.expander(t('ui.payment_and_interest')):
+                st.caption(t('ui.both_start_at_0_set_them_here_if_you_make'))
                 monthly_payment = st.number_input(
-                    "Monthly payment (EUR)",
+                    t('ui.monthly_payment_eur'),
                     min_value=0.0,
                     value=0.0,
                     step=50.0,
-                    help="The amount you normally repay each month. Leave 0 if there is no regular payment.",
+                    help=t('ui.the_amount_you_normally_repay_each_month_leave_0_if'),
                     key=draft_prefix + "payment",
                 )
                 interest_rate = st.number_input(
-                    "Interest rate (%)",
+                    t('ui.interest_rate'),
                     min_value=0.0,
                     value=0.0,
                     step=0.1,
-                    help="Use the percentage shown in your loan or credit agreement, such as 5 for 5%. Leave 0 if no interest is charged.",
+                    help=t('ui.use_the_percentage_shown_in_your_loan_or_credit_agreement'),
                     key=draft_prefix + "interest",
                 )
-            submitted = st.form_submit_button("Add debt", type="primary")
+            submitted = st.form_submit_button(t('ui.add_debt'), type="primary")
 
         if submitted:
             if not name.strip():
-                st.error("Please enter a debt name.")
+                st.error(t('ui.please_enter_a_debt_name'))
             elif remaining_balance is None:
-                st.error("Please enter the amount you still owe. You can enter 0.")
+                st.error(t('ui.please_enter_the_amount_you_still_owe_you_can_enter'))
             elif remaining_balance < 0 or monthly_payment < 0 or interest_rate < 0:
-                st.error("Amounts and the interest rate must be 0 or more.")
+                st.error(t('ui.amounts_and_the_interest_rate_must_be_0_or_more'))
             elif debt_type not in DEBT_TYPES:
-                st.error("Please choose what kind of debt this is.")
+                st.error(t('ui.please_choose_what_kind_of_debt_this_is'))
             else:
                 try:
                     add_debt(user_id, name, debt_type, remaining_balance, monthly_payment, interest_rate)
@@ -119,34 +119,33 @@ def render_debts_step(user_id):
 
         if st.session_state.get(prefix + "debt_save_uncertain", False):
             st.error(
-                "We couldn't confirm that the debt was saved. "
-                "Check the debt list before trying again."
+                t('ui.we_couldn_t_confirm_that_the_debt_was_saved_check')
             )
-            if st.button("Refresh debt list", key=prefix + "debts_refresh"):
+            if st.button(t('ui.refresh_debt_list'), key=prefix + "debts_refresh"):
                 st.session_state.pop(prefix + "debt_save_uncertain", None)
                 st.rerun()
 
-        if debts and st.button("Cancel", type="tertiary", key=prefix + "debt_cancel"):
+        if debts and st.button(t('ui.cancel'), type="tertiary", key=prefix + "debt_cancel"):
             st.session_state[form_open_key] = False
             st.rerun()
     elif debts:
-        if st.button("Continue", type="primary", key=prefix + "debts_continue"):
+        if st.button(t('actions.continue'), type="primary", key=prefix + "debts_continue"):
             st.session_state[prefix + "step"] = "funds"
             st.rerun()
-        if st.button("Add another", key=prefix + "debt_another"):
+        if st.button(t('ui.add_another'), key=prefix + "debt_another"):
             st.session_state[form_open_key] = True
             st.rerun()
 
     if form_open:
-        st.caption("Only saved debts will be included. You can add more later.")
+        st.caption(t('ui.only_saved_debts_will_be_included_you_can_add_more'))
         if st.button(
-            "I don't have any debt" if not debts else "Skip for now",
+            t('ui.i_don_t_have_any_debt') if not debts else t('ui.skip_for_now'),
             type="tertiary",
             key=prefix + "debts_skip",
         ):
             st.session_state[prefix + "step"] = "funds"
             st.rerun()
 
-    if st.button("Back to Assets", type="tertiary", key=prefix + "debts_back"):
+    if st.button(t('ui.back_to_assets'), type="tertiary", key=prefix + "debts_back"):
         st.session_state[prefix + "step"] = "assets"
         st.rerun()

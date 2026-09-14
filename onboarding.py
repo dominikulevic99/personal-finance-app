@@ -1,6 +1,7 @@
 """Welcome and guided setup routing; financial steps live in separate modules."""
 
 import streamlit as st
+from i18n import t
 from analytics import track_event
 
 from onboarding_service import get_entry_route
@@ -18,10 +19,10 @@ def render_guide_replay_action(user_id):
     """Voluntary navigation only; financial records and draft inputs stay intact."""
     prefix = f"onboarding_{user_id}_"
     if st.sidebar.button(
-        "Repeat setup",
+        t('ui.repeat_setup'),
         type="tertiary",
         key=prefix + "replay",
-        help="Review your setup again. Your existing data stays intact.",
+        help=t('ui.review_your_setup_again_your_existing_data_stays_intact'),
     ):
         st.session_state[prefix + "replay_welcome"] = True
         st.session_state[prefix + "replay_mode"] = True
@@ -46,8 +47,8 @@ def render_onboarding_entry(user_id, force_welcome=False):
         )
     except Exception:
         # Database exceptions can contain connection details; do not display them.
-        st.error("We couldn't check your setup status. Please try again.")
-        if st.button("Retry", key=prefix + "retry"):
+        st.error(t('ui.we_couldn_t_check_your_setup_status_please_try_again'))
+        if st.button(t('ui.retry'), key=prefix + "retry"):
             st.rerun()
         st.stop()
 
@@ -60,13 +61,13 @@ def render_onboarding_entry(user_id, force_welcome=False):
         "financial_picture": None,
     }.get(step, 1)
     encouragement = (
-        "A little clarity starts here." if route == "welcome"
-        else "One account is enough to begin." if step == "accounts"
-        else "Great start. Three steps left." if step == "assets"
-        else "Halfway there." if step == "debts"
-        else "Only one step left." if step == "funds"
-        else "One last step. Your financial picture is almost ready." if step == "monthly_plan"
-        else "A clear starting point for what's next."
+        t('ui.a_little_clarity_starts_here') if route == "welcome"
+        else t('ui.one_account_is_enough_to_begin') if step == "accounts"
+        else t('ui.great_start_three_steps_left') if step == "assets"
+        else t('ui.halfway_there') if step == "debts"
+        else t('ui.only_one_step_left') if step == "funds"
+        else t('ui.one_last_step_your_financial_picture_is_almost_ready') if step == "monthly_plan"
+        else t('ui.a_clear_starting_point_for_what_s_next')
     )
     with onboarding_shell(
         step=shell_step, encouragement=encouragement,
@@ -77,34 +78,34 @@ def render_onboarding_entry(user_id, force_welcome=False):
             track_event(user_id, "onboarding_step_viewed", step, session_state=st.session_state)
         if route == "welcome":
             render_welcome_content()
-            if st.button("Build my financial picture", type="primary", key=prefix + "start"):
+            if st.button(t('ui.build_my_financial_picture'), type="primary", key=prefix + "start"):
                 st.session_state[started_key] = True
                 st.session_state[prefix + "replay_welcome"] = False
                 st.session_state[prefix + "step"] = "accounts"
                 track_event(user_id, "onboarding_started", session_state=st.session_state)
                 st.rerun()
-            dashboard_label = "Skip for now"
+            dashboard_label = t('ui.skip_for_now')
         elif step == "accounts":
             render_accounts_step(user_id)
-            dashboard_label = "Skip for now"
+            dashboard_label = t('ui.skip_for_now')
         elif step == "assets":
             render_assets_step(user_id)
-            dashboard_label = "Open my dashboard"
+            dashboard_label = t('ui.open_my_dashboard')
         elif step == "debts":
             render_debts_step(user_id)
-            dashboard_label = "Open my dashboard"
+            dashboard_label = t('ui.open_my_dashboard')
         elif step == "funds":
             render_funds_step(user_id)
-            dashboard_label = "Open my dashboard"
+            dashboard_label = t('ui.open_my_dashboard')
         elif step == "monthly_plan":
             render_monthly_plan_step(user_id)
-            dashboard_label = "Open my dashboard"
+            dashboard_label = t('ui.open_my_dashboard')
         else:
             render_financial_picture(user_id, track_completion=not force_welcome)
-            if st.button("Back to Monthly Plan", type="tertiary", key=prefix + "financial_picture_back"):
+            if st.button(t('ui.back_to_monthly_plan'), type="tertiary", key=prefix + "financial_picture_back"):
                 st.session_state[prefix + "step"] = "monthly_plan"
                 st.rerun()
-            dashboard_label = "Open my dashboard"
+            dashboard_label = t('ui.open_my_dashboard')
 
         if st.button(
             dashboard_label,

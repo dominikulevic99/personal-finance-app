@@ -3,6 +3,7 @@
 from datetime import date
 
 import streamlit as st
+from i18n import t, TranslatedLabels, month_period
 from analytics import track_event
 
 from assets import get_assets
@@ -12,35 +13,27 @@ from monthly_plan_items import add_plan_item, get_plan_items
 from monthly_plans import create_monthly_plan, get_monthly_plan, update_planned_income
 
 
-ALLOCATION_TYPES = {
-    "EXPENSE": "Living costs",
-    "FUND": "Saving toward a fund",
-    "INVESTMENT": "Investing",
-    "DEBT_PAYMENT": "Debt payments",
-    "OTHER": "Other",
-}
+ALLOCATION_TYPES = TranslatedLabels({
+    "EXPENSE": 'ui.living_costs',
+    "FUND": 'ui.saving_toward_a_fund',
+    "INVESTMENT": 'ui.investing',
+    "DEBT_PAYMENT": 'ui.debt_payments',
+    "OTHER": 'ui.other',
+})
 
 
 def _render_explanation():
-    st.write("Your plan describes what you intend to do with your income.")
-    st.caption("Planned allocations are not actual contributions.")
-    with st.expander("A simple example"):
-        st.caption("An illustration only — these amounts are not added to your plan.")
+    st.write(t('ui.your_plan_describes_what_you_intend_to_do_with_your'))
+    st.caption(t('ui.planned_allocations_are_not_actual_contributions'))
+    with st.expander(t('ui.a_simple_example')):
+        st.caption(t('ui.an_illustration_only_these_amounts_are_not_added_to_your'))
         st.markdown(
-            "| This month's plan | Amount |\n"
-            "| :--- | ---: |\n"
-            "| Expected income | €2,500 |\n"
-            "| Living expenses | €1,400 |\n"
-            "| Emergency Fund | €300 |\n"
-            "| Investments | €400 |\n"
-            "| Travel Fund | €200 |\n"
-            "| Unallocated | €200 |"
+            t('ui.this_month_s_plan_amount_expected_income_2_500_living')
         )
-    with st.expander("What happens at the end of the month?"):
-        st.write("At the end of the month, you confirm what you actually contributed to Funds and Investments.")
+    with st.expander(t('ui.what_happens_at_the_end_of_the_month')):
+        st.write(t('ui.at_the_end_of_the_month_you_confirm_what_you'))
         st.write(
-            "Confirmed Fund and Investment contributions update those balances. "
-            "Your bank account balances still need to be updated manually."
+            t('ui.confirmed_fund_and_investment_contributions_update_those_balances_your_bank')
         )
 
 
@@ -50,22 +43,22 @@ def _render_income(user_id, prefix, year, month, plan):
     if plan is not None and not st.session_state.get(edit_key, False):
         return False
 
-    st.subheader("Start with your expected income")
+    st.subheader(t('ui.start_with_your_expected_income'))
     with st.form(prefix + f"income_form_{plan.id if plan else 'new'}"):
         income = st.number_input(
-            "Expected income (EUR)",
+            t('ui.expected_income_eur'),
             min_value=0.0,
             value=float(plan.planned_income) if plan is not None else None,
             step=100.0,
-            placeholder="e.g. 2500",
-            help="The money you expect to receive this month. You can update this later.",
+            placeholder=t('ui.e_g_2500'),
+            help=t('ui.the_money_you_expect_to_receive_this_month_you_can'),
             key=prefix + f"income_{plan.id if plan else 'new'}",
         )
-        submitted = st.form_submit_button("Save expected income", type="primary")
+        submitted = st.form_submit_button(t('ui.save_expected_income'), type="primary")
 
     if submitted:
         if income is None or income < 0:
-            st.error("Please enter expected income of 0 or more.")
+            st.error(t('ui.please_enter_expected_income_of_0_or_more'))
         else:
             try:
                 if plan is None:
@@ -85,11 +78,11 @@ def _render_income(user_id, prefix, year, month, plan):
                 st.rerun()
 
     if st.session_state.get(prefix + "income_uncertain", False):
-        st.error("We couldn't confirm that the income was saved. Reload your plan before trying again.")
-        if st.button("Reload plan", key=prefix + "income_reload"):
+        st.error(t('ui.we_couldn_t_confirm_that_the_income_was_saved_reload'))
+        if st.button(t('ui.reload_plan'), key=prefix + "income_reload"):
             st.session_state.pop(prefix + "income_uncertain", None)
             st.rerun()
-    if plan is not None and st.button("Cancel", type="tertiary", key=prefix + "income_cancel"):
+    if plan is not None and st.button(t('ui.cancel'), type="tertiary", key=prefix + "income_cancel"):
         st.session_state[edit_key] = False
         st.rerun()
     return True
@@ -99,12 +92,12 @@ def _render_allocation_form(user_id, prefix, plan, items, funds_by_id, investmen
     version = st.session_state.get(prefix + "allocation_version", 0)
     draft_prefix = prefix + f"allocation_{version}_"
     with st.container(border=True):
-        st.subheader("Give an amount a purpose")
+        st.subheader(t('ui.give_an_amount_a_purpose'))
         # This selector is outside the form so target choices update immediately.
         category = st.selectbox(
-            "Where should this money go?",
+            t('ui.where_should_this_money_go'),
             options=list(ALLOCATION_TYPES),
-            format_func=ALLOCATION_TYPES.get,
+            format_func=ALLOCATION_TYPES.formatter(),
             key=draft_prefix + "category",
         )
         targets = funds_by_id if category == "FUND" else investments_by_id
@@ -112,39 +105,39 @@ def _render_allocation_form(user_id, prefix, plan, items, funds_by_id, investmen
         missing_target = needs_target and not targets
         if missing_target:
             is_fund = category == "FUND"
-            st.info("Create a fund first to plan saving toward it." if is_fund else
-                    "Add an investment asset first to plan investing toward it.")
-            if st.button("Back to Funds" if is_fund else "Back to Assets", type="tertiary", key=draft_prefix + "create_target"):
+            st.info(t('ui.create_a_fund_first_to_plan_saving_toward_it') if is_fund else
+                    t('ui.add_an_investment_asset_first_to_plan_investing_toward_it'))
+            if st.button(t('ui.back_to_funds') if is_fund else t('ui.back_to_assets'), type="tertiary", key=draft_prefix + "create_target"):
                 st.session_state[f"onboarding_{user_id}_step"] = "funds" if is_fund else "assets"
                 st.rerun()
 
         with st.form(draft_prefix + category + "_form"):
             name = st.text_input(
-                "Allocation name", placeholder="e.g. Living expenses", key=draft_prefix + "name"
+                t('ui.allocation_name'), placeholder=t('ui.e_g_living_expenses'), key=draft_prefix + "name"
             )
             amount = st.number_input(
-                "Planned amount (EUR)", min_value=0.0, value=None, step=50.0,
-                placeholder="e.g. 1400", key=draft_prefix + "amount",
+                t('ui.planned_amount_eur'), min_value=0.0, value=None, step=50.0,
+                placeholder=t('ui.e_g_1400'), key=draft_prefix + "amount",
             )
             target_id = None
             if needs_target and targets:
                 target_id = st.selectbox(
-                    "Which fund?" if category == "FUND" else "Which investment?",
+                    t('ui.which_fund') if category == "FUND" else t('ui.which_investment'),
                     options=list(targets), index=None,
-                    placeholder="Choose a fund" if category == "FUND" else "Choose an investment",
+                    placeholder=t('ui.choose_a_fund') if category == "FUND" else t('ui.choose_an_investment'),
                     format_func=targets.get, key=draft_prefix + category + "_target",
                 )
-            submitted = st.form_submit_button("Add allocation", type="primary", disabled=missing_target)
+            submitted = st.form_submit_button(t('ui.add_allocation_detail'), type="primary", disabled=missing_target)
 
         if submitted:
             if not name.strip():
-                st.error("Please enter an allocation name.")
+                st.error(t('ui.please_enter_an_allocation_name'))
             elif amount is None or amount < 0:
-                st.error("Please enter a planned amount of 0 or more.")
+                st.error(t('ui.please_enter_a_planned_amount_of_0_or_more'))
             elif category not in ALLOCATION_TYPES:
-                st.error("Please choose where this money should go.")
+                st.error(t('ui.please_choose_where_this_money_should_go'))
             elif needs_target and target_id not in targets:
-                st.error("Please choose a saved fund or investment for this allocation.")
+                st.error(t('ui.please_choose_a_saved_fund_or_investment_for_this_allocation'))
             else:
                 try:
                     add_plan_item(
@@ -162,11 +155,11 @@ def _render_allocation_form(user_id, prefix, plan, items, funds_by_id, investmen
                     st.rerun()
 
         if st.session_state.get(prefix + "allocation_uncertain", False):
-            st.error("We couldn't confirm that the allocation was saved. Check the list before trying again.")
-            if st.button("Reload allocations", key=prefix + "allocation_reload"):
+            st.error(t('ui.we_couldn_t_confirm_that_the_allocation_was_saved_check'))
+            if st.button(t('ui.reload_allocations'), key=prefix + "allocation_reload"):
                 st.session_state.pop(prefix + "allocation_uncertain", None)
                 st.rerun()
-        if st.button("Cancel" if items else "Plan allocations later", type="tertiary", key=prefix + "allocation_cancel"):
+        if st.button(t('ui.cancel') if items else t('ui.plan_allocations_later'), type="tertiary", key=prefix + "allocation_cancel"):
             st.session_state[prefix + "allocation_open"] = False
             st.rerun()
 
@@ -178,9 +171,9 @@ def render_monthly_plan_step(user_id):
     year, month = st.session_state.setdefault(user_prefix + "plan_month", (today.year, today.month))
     prefix = user_prefix + f"plan_{year}_{month}_"
 
-    st.title("Decide what this month's money should do.")
-    st.write("Give your expected income direction before everyday spending takes over. Planning does not change your balances.")
-    st.caption(f"Plan for {date(year, month, 1).strftime('%B %Y')}")
+    st.title(t('ui.decide_what_this_month_s_money_should_do'))
+    st.write(t('ui.give_your_expected_income_direction_before_everyday_spending_takes_over'))
+    st.caption(t("plan.period", period=month_period(year, month)))
     _render_explanation()
 
     try:
@@ -189,8 +182,8 @@ def render_monthly_plan_step(user_id):
         funds = get_funds(user_id) if plan is not None else []
         assets = get_assets(user_id) if plan is not None else []
     except Exception:
-        st.error("We couldn't load your monthly plan. Please try again.")
-        if st.button("Retry", key=prefix + "retry"):
+        st.error(t('ui.we_couldn_t_load_your_monthly_plan_please_try_again'))
+        if st.button(t('ui.retry'), key=prefix + "retry"):
             st.rerun()
         return
 
@@ -203,44 +196,44 @@ def render_monthly_plan_step(user_id):
         remaining = totals["remaining"]
         income_col, allocated_col, remaining_col = st.columns(3)
         with income_col:
-            st.metric("Expected income", f"€{plan.planned_income:,.2f}")
+            st.metric(t('plan.expected_income'), f"€{plan.planned_income:,.2f}")
         with allocated_col:
-            st.metric("Planned allocations", f"€{allocated:,.2f}")
+            st.metric(t('ui.planned_allocations'), f"€{allocated:,.2f}")
         with remaining_col:
-            st.metric("Unallocated", f"€{remaining:,.2f}")
+            st.metric(t('ui.unallocated'), f"€{remaining:,.2f}")
         if remaining < 0:
-            st.warning(f"You have planned €{abs(remaining):,.2f} more than your expected income.")
+            st.warning(t("plan.over_income", amount=f"{abs(remaining):,.2f}"))
         elif remaining > 0:
-            st.caption("You can leave some income unallocated and decide later.")
+            st.caption(t('ui.you_can_leave_some_income_unallocated_and_decide_later'))
         else:
-            st.caption("Every euro of your expected income has a purpose.")
+            st.caption(t('ui.every_euro_of_your_expected_income_has_a_purpose'))
 
         if st.session_state.pop(prefix + "allocation_saved", False):
-            st.success("Allocation saved to your plan. No contribution has been recorded.")
+            st.success(t('ui.allocation_saved_to_your_plan_no_contribution_has_been_recorded'))
         if items:
-            st.subheader("Your allocations")
+            st.subheader(t('ui.your_allocations'))
             for item in items:
                 with st.container(border=True):
                     st.text(item.name)
-                    st.caption(f"{item.planned_amount:,.2f} EUR planned · {ALLOCATION_TYPES.get(item.category_type, 'Allocation')}")
+                    st.caption(t("plan.allocation_summary", amount=f"{item.planned_amount:,.2f}", kind=ALLOCATION_TYPES.get(item.category_type, t('ui.allocation'))))
                     if item.category_type == "FUND":
-                        st.text(f"Fund: {funds_by_id.get(item.fund_id, 'Not available')}")
+                        st.text(t("buckets.linked", name=funds_by_id.get(item.fund_id, t('ui.not_available'))))
                     elif item.category_type == "INVESTMENT":
-                        st.text(f"Investment: {investments_by_id.get(item.asset_id, 'Not available')}")
+                        st.text(t("investments.linked", name=investments_by_id.get(item.asset_id, t('ui.not_available'))))
 
         if st.session_state.get(prefix + "allocation_open", not items):
             _render_allocation_form(user_id, prefix, plan, items, funds_by_id, investments_by_id)
         else:
-            if st.button("See my financial picture", type="primary", key=prefix + "finish"):
+            if st.button(t('ui.see_my_financial_picture'), type="primary", key=prefix + "finish"):
                 st.session_state[user_prefix + "step"] = "financial_picture"
                 st.rerun()
-            if st.button("Add another allocation" if items else "Add allocation", key=prefix + "another"):
+            if st.button(t('ui.add_another_allocation') if items else t('ui.add_allocation_detail'), key=prefix + "another"):
                 st.session_state[prefix + "allocation_open"] = True
                 st.rerun()
-        if st.button("Change expected income", key=prefix + "edit_income_button"):
+        if st.button(t('ui.change_expected_income'), key=prefix + "edit_income_button"):
             st.session_state[prefix + "edit_income"] = True
             st.rerun()
 
-    if st.button("Back to Funds", type="tertiary", key=prefix + "back"):
+    if st.button(t('ui.back_to_funds'), type="tertiary", key=prefix + "back"):
         st.session_state[user_prefix + "step"] = "funds"
         st.rerun()

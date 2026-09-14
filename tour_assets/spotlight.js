@@ -1,7 +1,18 @@
 // Phase 1: only geometry is read from the dashboard, never financial text/inputs.
 export default function render(component) {
     const { parentElement, data, setStateValue, setTriggerValue } = component;
+    const document = parentElement.ownerDocument;
+    const window = document.defaultView;
+    const { AbortController, ResizeObserver, MutationObserver } = window;
+    const requestAnimationFrame = window.requestAnimationFrame.bind(window);
+    const cancelAnimationFrame = window.cancelAnimationFrame.bind(window);
+    const getComputedStyle = window.getComputedStyle.bind(window);
+    // Components v2 may call render again without first unmounting the old UI.
+    // A document-level disposal signal also covers replacement shadow roots.
+    const disposeEvent = "finance-product-tour-dispose";
+    document.dispatchEvent(new window.Event(disposeEvent));
     const steps = data.steps;
+    const labels = data.labels;
     let index = data.step;
     let disposed = false;
     let frame = 0;
@@ -10,15 +21,17 @@ export default function render(component) {
     const priorFocus = document.activeElement;
     const dialog = document.createElement("dialog");
     dialog.className = "tour-overlay";
-    dialog.setAttribute("aria-label", "Product Guide prototype");
+    dialog.style.fontFamily = getComputedStyle(document.body).fontFamily;
+    dialog.setAttribute("aria-label", labels.title);
+    dialog.lang = data.language;
     dialog.dataset.missing = "true";
     // Static owned HTML, never interpolated user data.
     dialog.innerHTML = `<div class="tour-spotlight" aria-hidden="true"></div>
       <section class="tour-card" aria-live="polite">
-        <div class="tour-top"><span class="tour-count"></span><button data-action="close">Close</button></div>
+        <div class="tour-top"><span class="tour-count"></span><button data-action="lt" lang="lt">LT</button><button data-action="en" lang="en">EN</button><button data-action="close"></button></div>
         <h2></h2><p class="tour-copy"></p><p class="tour-warning" hidden></p>
-        <div class="tour-actions"><button data-action="back">Back</button>
-          <button data-action="skip">Skip</button><button class="primary" data-action="next">Next</button></div>
+        <div class="tour-actions"><button data-action="back"></button>
+          <button data-action="skip"></button><button data-action="feedback" hidden></button><button class="primary" data-action="next"></button></div>
       </section>`;
     const card = dialog.querySelector(".tour-card");
     const spotlight = dialog.querySelector(".tour-spotlight");
@@ -26,6 +39,14 @@ export default function render(component) {
     const next = dialog.querySelector('[data-action="next"]');
     const back = dialog.querySelector('[data-action="back"]');
     const close = dialog.querySelector('[data-action="close"]');
+    close.textContent = labels.close;
+    back.textContent = labels.back;
+    dialog.querySelector('[data-action="skip"]').textContent = labels.skip;
+    const feedback = dialog.querySelector('[data-action="feedback"]');
+    feedback.textContent = labels.feedback;
+    for (const language of ["lt", "en"]) {
+        dialog.querySelector(`[data-action="${language}"]`).setAttribute("aria-pressed", String(data.language === language));
+    }
     const abort = new AbortController();
     const options = { signal: abort.signal };
     const viewport = window.visualViewport;
@@ -45,6 +66,7 @@ export default function render(component) {
     }
 
     function finish(reason) {
+        if (disposed) return;
         // Restore the interface before notifying Python, even if communication fails.
         cleanup();
         setTriggerValue("finished", reason);
@@ -76,7 +98,7 @@ export default function render(component) {
         if (!rect || rect.width === 0 || rect.height === 0) {
             dialog.dataset.missing = "true";
             warning.hidden = false;
-            warning.textContent = "This section isn't available right now. You can continue or close the tour.";
+            warning.textContent = labels.missing;
             card.style.left = `${left + (width - card.offsetWidth) / 2}px`;
             card.style.top = `${top + Math.max(gap, (height - card.offsetHeight) / 2)}px`;
             return;
@@ -119,7 +141,7 @@ export default function render(component) {
         dialog.dataset.missing = String(overlap);
         if (overlap) {
             warning.hidden = false;
-            warning.textContent = "This section doesn't fit beside the guide at this screen size. Rotate your device, or continue or close the tour.";
+            warning.textContent = labels.small;
         }
         spotlight.style.left = `${Math.max(left, rect.left - 4)}px`;
         spotlight.style.top = `${Math.max(top, rect.top - 4)}px`;
@@ -128,16 +150,20 @@ export default function render(component) {
     }
 
     function showStep() {
-        dialog.querySelector(".tour-count").textContent = `${index + 1} of ${steps.length}`;
+        dialog.querySelector(".tour-count").textContent = labels.count.replace("{current}", String(index + 1)).replace("{total}", String(steps.length));
         dialog.querySelector("h2").textContent = steps[index].title;
         dialog.querySelector(".tour-copy").textContent = steps[index].copy;
         back.disabled = index === 0;
-        next.textContent = index === steps.length - 1 ? "Finish" : "Next";
+        const last = index === steps.length - 1;
+        next.textContent = last ? labels.dashboard : labels.next;
+        feedback.hidden = !(last && data.offer_feedback);
+        dialog.querySelector('[data-action="skip"]').hidden = last;
         shouldScroll = true;
         schedule();
     }
 
     try {
+        document.addEventListener(disposeEvent, cleanup, options);
         parentElement.append(dialog);
         // Native modal top layer makes the underlying app inert (pointer and keyboard).
         dialog.showModal();
@@ -146,6 +172,14 @@ export default function render(component) {
         dialog.addEventListener("close", () => finish("close"), options);
         dialog.addEventListener("click", event => {
             const action = event.target.closest("button")?.dataset.action;
+            if (action === "feedback" && index === steps.length - 1 && data.offer_feedback) return finish("feedback");
+            if (action === "lt" || action === "en") {
+                if (action !== data.language) {
+                    setStateValue("step", index);
+                    setTriggerValue("language", action);
+                }
+                return;
+            }
             if (action === "close" || action === "skip") return finish(action);
             if (action === "next" && index === steps.length - 1) return finish("finish");
             if (action === "next" || (action === "back" && index > 0)) {

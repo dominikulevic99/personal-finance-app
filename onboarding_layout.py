@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from html import escape
 
 import streamlit as st
+from i18n import t
 from visual_styles import PALETTE_CSS, BUTTON_CSS, FORM_CSS, LAYOUT_CSS
 
 
@@ -124,7 +125,7 @@ ONBOARDING_CSS = """
 
 
 @contextmanager
-def onboarding_shell(step=None, encouragement="A little clarity starts here.", complete=False):
+def onboarding_shell(step=None, encouragement=None, complete=False):
     """Wrap a screen; pass step=1..5 when guided steps are implemented.
 
     Welcome has no step number; complete=True displays the finished setup state.
@@ -133,15 +134,17 @@ def onboarding_shell(step=None, encouragement="A little clarity starts here.", c
         raise ValueError("Onboarding step must be an integer from 1 to 5.")
     st.html(PALETTE_CSS + LAYOUT_CSS + ONBOARDING_CSS + BUTTON_CSS + FORM_CSS)
     with st.container(key="onboarding_shell"):
-        label = "Setup complete" if complete else "Your financial plan" if step is None else f"Step {step} of 5"
+        label = t('ui.setup_complete') if complete else t('ui.your_financial_plan') if step is None else t("onboarding.step", step=step)
+        if encouragement is None:
+            encouragement = t('ui.a_little_clarity_starts_here')
         # The bar represents steps completed before the current screen.
         completed = 5 if complete else 0 if step is None else step - 1
         st.html(
-            '<div class="onboarding-eyebrow">A little more peace of mind</div>'
+            f'<div class="onboarding-eyebrow">{escape(t("onboarding.eyebrow"))}</div>'
             '<div class="onboarding-progress-label">'
             f'<span>{label}</span><span>{escape(encouragement)}</span></div>'
             f'<div class="onboarding-track" role="progressbar" '
-            f'aria-label="Setup steps completed" aria-valuemin="0" '
+            f'aria-label="{escape(t("onboarding.progress_label"))}" aria-valuemin="0" '
             f'aria-valuemax="5" aria-valuenow="{completed}">'
             f'<div class="onboarding-fill" style="width:{completed * 20}%"></div></div>'
         )
@@ -150,29 +153,28 @@ def onboarding_shell(step=None, encouragement="A little clarity starts here.", c
 
 def render_welcome_content():
     """Static, illustrative content: no sample balances or financial claims."""
-    st.html("""
-        <h1>Know what you have. Know what it's for.</h1>
-        <p class="onboarding-lead">Your whole financial picture, made clear.<br>Go beyond seeing the numbers. Understand your money and what to do next.</p>
+    st.html(f"""
+        <h1>{escape(t("product.promise"))}</h1>
+        <p class="onboarding-lead">{escape(t("product.support"))}</p>
         <div class="onboarding-cards">
             <section class="onboarding-card">
-                <h2>What you have—and what you owe</h2>
+                <h2>{escape(t("welcome.have.title"))}</h2>
                 <ul>
-                    <li>See your cash, investments and other assets</li>
-                    <li>Bring what you owe into the picture</li>
-                    <li>Understand your net worth: what you own minus what you owe</li>
+                    <li>{escape(t("welcome.have.cash"))}</li>
+                    <li>{escape(t("welcome.have.debts"))}</li>
+                    <li>{escape(t("welcome.have.worth"))}</li>
                 </ul>
             </section>
             <section class="onboarding-card onboarding-path">
-                <h2>What your money is for</h2>
+                <h2>{escape(t("welcome.purpose.title"))}</h2>
                 <ul>
-                    <li>Reserve cash for goals like travel or an emergency buffer</li>
-                    <li>See what remains unassigned</li>
-                    <li>Plan where this month's income should go</li>
+                    <li>{escape(t("welcome.purpose.reserve"))}</li>
+                    <li>{escape(t("welcome.purpose.free"))}</li>
+                    <li>{escape(t("welcome.purpose.plan"))}</li>
                 </ul>
             </section>
         </div>
     """)
     st.caption(
-        "Setup takes only a few minutes. You enter and update your figures manually. "
-        "No bank connection required. Never enter card numbers, PINs or banking credentials."
+        t('ui.setup_takes_only_a_few_minutes_you_enter_and_update')
     )

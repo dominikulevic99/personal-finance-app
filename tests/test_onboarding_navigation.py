@@ -1,4 +1,5 @@
 import unittest
+from i18n import t
 from contextlib import nullcontext
 from unittest.mock import MagicMock, patch
 
@@ -27,7 +28,7 @@ class NavigationTests(unittest.TestCase):
         ui = self.render(state, 'onboarding_7_nav_monthly_plan', unrestricted=True)
         self.assertEqual(state['onboarding_7_step'], 'monthly_plan')
         self.assertNotIn('onboarding_7_highest_step', state)
-        ui.expander.assert_called_once_with('Navigate setup', expanded=False)
+        ui.expander.assert_called_once_with(t('ui.navigate_setup'), expanded=False)
 
     def test_reached_steps_remain_accessible_after_going_back(self):
         state = {'onboarding_7_step': 'funds'}

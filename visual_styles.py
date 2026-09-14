@@ -305,7 +305,7 @@ PICTURE_CSS = """
 SIDEBAR_CSS = """
 <style>
 /* Only sidebar navigation links; preserve links and controls in the dashboard. */
-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] a[href^="#"] {
+[data-testid="stSidebar"] a[href^="#"] {
     display: block;
     box-sizing: border-box;
     padding: .45rem .65rem;
@@ -313,18 +313,20 @@ SIDEBAR_CSS = """
     border-radius: 9px;
     color: var(--finance-text);
     text-decoration: none;
+    font-family: inherit;
+    font-size: .95rem;
     font-weight: 400;
     line-height: 1.5;
 }
-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] a[href^="#"]:visited {
+[data-testid="stSidebar"] a[href^="#"]:visited {
     color: var(--finance-text);
 }
-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] a[href^="#"]:hover {
+[data-testid="stSidebar"] a[href^="#"]:hover {
     color: var(--finance-accent);
     background: #edf1e7;
     text-decoration: none;
 }
-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] a[href^="#"]:focus-visible {
+[data-testid="stSidebar"] a[href^="#"]:focus-visible {
     outline: 2px solid var(--finance-accent);
     outline-offset: 2px;
     text-decoration: none;
@@ -342,11 +344,18 @@ SIDEBAR_CSS = """
     color: var(--finance-accent);
     filter: none;
 }
+[data-testid="stSidebar"] [data-testid="stButton"] button[kind="tertiary"],
+[data-testid="stSidebar"] [data-testid="stButton"] button[kind="tertiary"] p {
+    font-family: inherit;
+    font-size: .95rem;
+    font-weight: 400;
+    line-height: 1.5;
+}
 [data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
     color: var(--finance-muted);
 }
-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] a[href="#delete-my-data"],
-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] a[href="#delete-my-data"]:visited {
+[data-testid="stSidebar"] a[href="#delete-my-data"],
+[data-testid="stSidebar"] a[href="#delete-my-data"]:visited {
     color: #825e56;
     font-size: .85rem;
 }

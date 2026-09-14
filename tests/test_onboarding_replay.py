@@ -3,6 +3,7 @@
 import importlib
 import sys
 import unittest
+from i18n import t
 from contextlib import nullcontext
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -46,7 +47,7 @@ class GuideReplayTests(unittest.TestCase):
             pass
 
     def replay(self, user_id=7):
-        self.ui.click = "Repeat setup"
+        self.ui.click = t('ui.repeat_setup')
         try:
             onboarding.render_guide_replay_action(user_id)
         except Rerun:
@@ -95,7 +96,7 @@ class GuideReplayTests(unittest.TestCase):
     def test_start_replay_uses_accounts_without_reclassifying_user(self):
         self.replay()
         self.assertNotIn("onboarding_7_started", self.ui.session_state)
-        self.ui.click = "Build my financial picture"
+        self.ui.click = t('ui.build_my_financial_picture')
         self.render()
         self.ui.click = None
         self.render()
@@ -108,7 +109,7 @@ class GuideReplayTests(unittest.TestCase):
 
     def test_skip_replay_returns_to_dashboard_without_loop(self):
         self.replay()
-        self.ui.click = "Skip for now"
+        self.ui.click = t('ui.skip_for_now')
         self.render()
         self.welcome.reset_mock()
         self.ui.click = None
@@ -120,7 +121,7 @@ class GuideReplayTests(unittest.TestCase):
 
     def test_completion_opens_dashboard_and_can_replay_again(self):
         self.ui.session_state = {"onboarding_7_started": True, "onboarding_7_step": "financial_picture"}
-        self.ui.click = "Open my dashboard"
+        self.ui.click = t('ui.open_my_dashboard')
         self.render()
         self.assertTrue(self.ui.session_state["onboarding_7_dashboard"])
         self.replay()

@@ -5,6 +5,7 @@ from contextlib import contextmanager
 import re
 
 import streamlit as st
+from i18n import t
 from visual_styles import fund_card_style
 
 
@@ -19,17 +20,17 @@ def _number(value):
 def goal_progress_copy(balance, target):
     current = _number(balance)
     goal = _number(target)
-    amount = f"€{current:,.2f}" if current is not None else "Balance unavailable"
+    amount = f"€{current:,.2f}" if current is not None else t('ui.balance_unavailable')
     if target is None or goal == 0:
-        return amount, "No target set"
-    target_text = f"€{goal:,.2f}" if goal is not None else "Target unavailable"
+        return amount, t('ui.no_target_set')
+    target_text = f"€{goal:,.2f}" if goal is not None else t('ui.target_unavailable')
     amounts = f"{amount} / {target_text}"
     if current is None or goal is None or current < 0 or goal < 0:
-        return amounts, "Progress unavailable. Check the saved balance and target."
+        return amounts, t('ui.progress_unavailable_check_the_saved_balance_and_target')
     percentage = current / goal * 100
     if current >= goal:
-        return amounts, f"{percentage:,.1f}% · Target reached"
-    return amounts, f"{percentage:,.1f}% · €{goal - current:,.2f} to go"
+        return amounts, t("buckets.reached", percentage=f"{percentage:,.1f}")
+    return amounts, t("buckets.to_go", percentage=f"{percentage:,.1f}", remaining=f"{goal - current:,.2f}")
 
 
 def render_fund_progress(balance, target):
@@ -48,10 +49,10 @@ def fund_progress_card(user_id, fund):
         fraction = float(min(current / goal, Decimal(1)))
     # Fund names are user text, not Markdown formatting or links.
     name = re.sub(r'([\\`*_{}\[\]()#+.!|>~-])', r'\\\1', ' '.join(fund.name.split()))
-    status = "No target set" if fund.target_amount is None or goal == 0 else "Progress unavailable"
+    status = t('ui.no_target_set') if fund.target_amount is None or goal == 0 else t('ui.progress_unavailable')
     if ' · ' in detail:
         status, detail = detail.split(' · ', 1)
-    saved = f"€{current:,.2f} saved" if current is not None else "Balance unavailable"
+    saved = t("buckets.saved_amount", amount=f"{current:,.2f}") if current is not None else t('ui.balance_unavailable')
     label = f"**{name}** *{status}*  \n{saved}"
     key = f"fund_goal_{int(user_id)}_{int(fund.id)}"
     st.html(fund_card_style(key, fraction))

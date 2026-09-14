@@ -3,6 +3,7 @@
 from datetime import date
 
 import streamlit as st
+from i18n import t, month_period
 from analytics import track_event
 from monthly_checkin import RETURN_COPY
 
@@ -39,95 +40,90 @@ def render_financial_picture(user_id, *, track_completion=True):
     try:
         summary, monthly = load_financial_picture(user_id, year, month)
     except Exception:
-        st.error("We couldn't load your financial picture. Please try again.")
-        if st.button("Retry", key=prefix + "picture_retry"):
+        st.error(t('ui.we_couldn_t_load_your_financial_picture_please_try_again'))
+        if st.button(t('ui.retry'), key=prefix + "picture_retry"):
             st.rerun()
         return
 
     if track_completion and not st.session_state.get(prefix + "replay_mode", False):
         track_event(user_id, "onboarding_completed", session_state=st.session_state)
     st.html(PICTURE_CSS)
+    st.session_state[f"feedback_{user_id}_picture_seen"] = True
     with st.container(key="financial_picture"):
-        st.title("Your financial picture is ready.")
-        st.write("What you have, what's reserved, and what's free to use.")
-        st.caption("A snapshot of the information you have saved. You can update it as life changes.")
+        st.title(t('ui.your_financial_picture_is_ready'))
+        st.write(t('ui.what_you_have_what_s_reserved_and_what_s_free'))
+        st.caption(t('ui.a_snapshot_of_the_information_you_have_saved_you_can'))
 
         with st.container(key="picture_net_worth"):
             st.metric(
-                "Net worth", f"€{summary['net_worth']:,.2f}",
-                help="Your cash and assets, minus what you owe.",
+                t('metrics.net_worth'), f"€{summary['net_worth']:,.2f}",
+                help=t('ui.your_cash_and_assets_minus_what_you_owe'),
             )
         if summary["net_worth"] > 0:
-            st.caption("Based on your saved figures, what you own is worth more than what you owe.")
+            st.caption(t('ui.based_on_your_saved_figures_what_you_own_is_worth'))
         elif summary["net_worth"] < 0:
-            st.caption("Based on your saved figures, what you owe is greater than what you own. This is a starting snapshot.")
+            st.caption(t('ui.based_on_your_saved_figures_what_you_owe_is_greater'))
         else:
-            st.caption("Your saved cash and asset values balance out your recorded debts.")
+            st.caption(t('ui.your_saved_cash_and_asset_values_balance_out_your_recorded'))
 
         cash_col, funds_col, free_col = st.columns(3)
         with cash_col:
-            st.metric("Available cash", f"€{summary['available_cash']:,.2f}",
-                      help="Money currently available in your accounts and cash.")
+            st.metric(t('metrics.available_cash'), f"€{summary['available_cash']:,.2f}",
+                      help=t('ui.money_currently_available_in_your_accounts_and_cash'))
         with funds_col:
-            st.metric("Reserved Funds", f"€{summary['reserved_funds']:,.2f}",
-                      help="Part of your available cash assigned to specific goals.")
+            st.metric(t('metrics.set_aside'), f"€{summary['reserved_funds']:,.2f}",
+                      help=t('ui.part_of_your_available_cash_assigned_to_specific_goals'))
         with free_col:
-            st.metric("Free Cash", f"€{summary['free_cash']:,.2f}",
-                      help="Cash not reserved for Funds. This does not subtract monthly planned expenses.")
-        st.caption("Funds reserve part of your cash. Free Cash is what remains unassigned.")
+            st.metric(t('metrics.free_cash'), f"€{summary['free_cash']:,.2f}",
+                      help=t('ui.cash_not_reserved_for_funds_this_does_not_subtract_monthly'))
+        st.caption(t('metrics.cash_explanation'))
 
-        with st.expander("Your assets and debts"):
-            st.metric("Debt", f"€{summary['total_debt']:,.2f}", help="The total amount you still owe.")
+        with st.expander(t('ui.your_assets_and_debts')):
+            st.metric(t('ui.debt'), f"€{summary['total_debt']:,.2f}", help=t('ui.the_total_amount_you_still_owe'))
             liquid_col, semi_col, non_col = st.columns(3)
             with liquid_col:
-                st.metric("Liquid investments", f"€{summary['liquid_investments']:,.2f}",
-                          help="Assets classified as usually convertible to cash within a few days.")
+                st.metric(t('ui.liquid_investments_detail'), f"€{summary['liquid_investments']:,.2f}",
+                          help=t('ui.assets_classified_as_usually_convertible_to_cash_within_a_few'))
             with semi_col:
-                st.metric("Semi-liquid assets", f"€{summary['semi_liquid_assets']:,.2f}",
-                          help="Assets classified as taking more time or effort to access.")
+                st.metric(t('ui.semi_liquid_assets_detail'), f"€{summary['semi_liquid_assets']:,.2f}",
+                          help=t('ui.assets_classified_as_taking_more_time_or_effort_to_access'))
             with non_col:
-                st.metric("Non-liquid assets", f"€{summary['non_liquid_assets']:,.2f}",
-                          help="Assets classified as usually taking longer to sell, such as property.")
-            st.caption("These use the availability classifications saved for your assets. All asset values count toward net worth.")
+                st.metric(t('ui.non_liquid_assets_detail'), f"€{summary['non_liquid_assets']:,.2f}",
+                          help=t('ui.assets_classified_as_usually_taking_longer_to_sell_such_as'))
+            st.caption(t('ui.these_use_the_availability_classifications_saved_for_your_assets_all'))
 
-        st.subheader(f"Your plan for {date(year, month, 1).strftime('%B %Y')}")
+        st.subheader(t("plan.your_period", period=month_period(year, month)))
         if monthly is None:
-            st.info("No monthly plan is saved for this month yet.")
+            st.info(t('ui.no_monthly_plan_is_saved_for_this_month_yet'))
         else:
             income_col, allocation_col, remaining_col = st.columns(3)
             with income_col:
-                st.metric("Expected income", f"€{monthly['income']:,.2f}")
+                st.metric(t('plan.expected_income'), f"€{monthly['income']:,.2f}")
             with allocation_col:
-                st.metric("Planned allocations", f"€{monthly['allocated']:,.2f}")
+                st.metric(t('ui.planned_allocations'), f"€{monthly['allocated']:,.2f}")
             with remaining_col:
-                st.metric("Unallocated", f"€{monthly['remaining']:,.2f}")
+                st.metric(t('ui.unallocated'), f"€{monthly['remaining']:,.2f}")
             if monthly["remaining"] < 0:
-                st.caption("Your planned allocations currently exceed your expected income.")
+                st.caption(t('ui.your_planned_allocations_currently_exceed_your_expected_income'))
             elif monthly["remaining"] > 0:
-                st.caption("Some of your expected income is still unallocated.")
+                st.caption(t('ui.some_of_your_expected_income_is_still_unallocated'))
             else:
-                st.caption("All of your expected income is allocated in this plan.")
-            st.caption("These are intentions, not actual contributions. Planning does not move money or change balances.")
+                st.caption(t('ui.all_of_your_expected_income_is_allocated_in_this_plan'))
+            st.caption(t('ui.these_are_intentions_not_actual_contributions_planning_does_not_move'))
 
         with st.container(border=True):
             if monthly is not None and (year, month) == (today.year, today.month):
-                st.subheader("You're set for this month.")
-                st.caption("Your plan is saved. You can adjust it whenever you need to.")
+                st.subheader(t('ui.you_re_set_for_this_month'))
+                st.caption(t('ui.your_plan_is_saved_you_can_adjust_it_whenever_you'))
             else:
-                st.subheader("Make room for a monthly check-in.")
-                st.caption("Prepare this month's plan in the dashboard when you're ready.")
-            st.write("You don't need to check this app every day.")
-            st.write(RETURN_COPY)
+                st.subheader(t('ui.make_room_for_a_monthly_check_in'))
+                st.caption(t('ui.prepare_this_month_s_plan_in_the_dashboard_when_you'))
+            st.write(t('ui.you_don_t_need_to_check_this_app_every_day'))
+            st.write(t(RETURN_COPY))
 
-        with st.expander("Your monthly routine"):
+        with st.expander(t('ui.your_monthly_routine')):
             st.markdown(
-                "1. Check your bank balances.\n"
-                "2. Update account balances manually.\n"
-                "3. Review how the month went.\n"
-                "4. Compare your plan with reality.\n"
-                "5. Confirm actual Fund and Investment contributions.\n"
-                "6. Review your financial picture.\n"
-                "7. Plan the next month."
+                t('ui.1_check_your_bank_balances_2_update_account_balances_manually')
             )
-            st.write("You don't need to enter every small daily purchase. Your bank's monthly spending summary can help with your review.")
-            st.caption("Confirmed contributions update Fund and Investment balances. Account balances still need to be updated manually.")
+            st.write(t('ui.you_don_t_need_to_enter_every_small_daily_purchase'))
+            st.caption(t('ui.confirmed_contributions_update_fund_and_investment_balances_account_balances_still'))

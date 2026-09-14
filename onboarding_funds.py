@@ -1,6 +1,7 @@
 """Step 4 presentation for funds that reserve existing money."""
 
 import streamlit as st
+from i18n import t
 
 from accounts import get_accounts
 from calculations import calculate_financial_summary
@@ -14,37 +15,33 @@ def render_funds_step(user_id):
     form_open_key = prefix + "fund_form_open"
     form_version_key = prefix + "fund_form_version"
 
-    st.title("Now give some of your money a purpose.")
+    st.title(t('ui.now_give_some_of_your_money_a_purpose'))
     st.write(
-        "Your bank balance tells you how much is there. Funds reserve existing cash "
-        "for goals, helping you see what's still free."
+        t('ui.your_bank_balance_tells_you_how_much_is_there_funds')
     )
     with st.container(border=True):
-        st.caption("Example — not your balances")
-        st.write("**€5,000 available**")
-        st.text("€1,500  Emergency\n€800    Japan\n€900    Laptop")
-        st.write("**€1,800 still free**")
+        st.caption(t('ui.example_not_your_balances'))
+        st.write(t('ui.5_000_available'))
+        st.text(t('ui.1_500_emergency_800_japan_900_laptop'))
+        st.write(t('ui.1_800_still_free'))
         st.write(
-            "Your bank still shows €5,000 — but now you know what €3,200 is already for."
+            t('ui.your_bank_still_shows_5_000_but_now_you_know')
         )
-    st.write("If it matters enough to plan for, it can be a Fund.")
-    with st.expander("How Funds work"):
+    st.write(t('ui.if_it_matters_enough_to_plan_for_it_can_be'))
+    with st.expander(t('ui.how_funds_work')):
         st.write(
-            "A Fund here is not an investment fund. It reserves existing cash "
-            "and does not create additional wealth or increase your net worth."
-        )
-        st.write(
-            "You can allocate part of your monthly income toward a Fund. "
-            "A planned allocation is an intention, not an actual contribution."
+            t('ui.a_fund_here_is_not_an_investment_fund_it_reserves')
         )
         st.write(
-            "At the end of the month, you confirm how much you actually contributed.")
-        st.write("Confirmed contributions update the Fund balance.")
-        st.write(
-            "Your bank account balances are not synchronized automatically, "
-            "so you still update those manually."
+            t('ui.you_can_allocate_part_of_your_monthly_income_toward_a')
         )
-        st.caption("Avoid setting aside the same money in more than one fund.")
+        st.write(
+            t('ui.at_the_end_of_the_month_you_confirm_how_much'))
+        st.write(t('ui.confirmed_contributions_update_the_fund_balance'))
+        st.write(
+            t('ui.your_bank_account_balances_are_not_synchronized_automatically_so_you')
+        )
+        st.caption(t('ui.avoid_setting_aside_the_same_money_in_more_than_one'))
 
     try:
         funds = get_funds(user_id)
@@ -53,27 +50,27 @@ def render_funds_step(user_id):
             accounts, [], [], funds)["available_cash"]
     except Exception:
         st.error(
-            "We couldn't load your funds and account balances. Please try again.")
-        if st.button("Retry", key=prefix + "funds_retry"):
+            t('ui.we_couldn_t_load_your_funds_and_account_balances_please'))
+        if st.button(t('ui.retry'), key=prefix + "funds_retry"):
             st.rerun()
         return
 
     if st.session_state.pop(prefix + "fund_saved", False):
-        st.success("Fund created. You can build it up over time.")
+        st.success(t('ui.fund_created_you_can_build_it_up_over_time'))
 
     if funds:
-        st.subheader("Your funds")
+        st.subheader(t('buckets.yours'))
         show_all_key = prefix + "show_all_funds"
         show_all = st.session_state.get(show_all_key, False)
         if len(funds) > 3:
             if st.button(
-                "Show fewer funds" if show_all else "Show all funds",
+                t('ui.show_fewer_funds') if show_all else t('ui.show_all_funds'),
                 type="tertiary", key=prefix + "toggle_funds",
             ):
                 st.session_state[show_all_key] = not show_all
                 st.rerun()
             st.caption(
-                f"Showing {len(funds) if show_all else 3} of {len(funds)} funds")
+                t("buckets.showing", shown=len(funds) if show_all else 3, total=len(funds)))
         for fund in (funds if show_all else funds[:3]):
             with st.container(border=True):
                 st.text(fund.name)
@@ -85,36 +82,35 @@ def render_funds_step(user_id):
             f"fund_draft_{st.session_state.get(form_version_key, 0)}_"
         with st.form(draft_prefix + "form"):
             name = st.text_input(
-                "Fund name", placeholder="e.g. Emergency fund", key=draft_prefix + "name"
+                t('buckets.name'), placeholder=t('ui.e_g_emergency_fund'), key=draft_prefix + "name"
             )
             current_balance = st.number_input(
-                "Already set aside (EUR)",
+                t('ui.already_set_aside_eur'),
                 min_value=0.0,
                 value=0.0,
                 step=100.0,
-                help="Money already in your accounts or cash that you want to reserve for this goal. Leave 0 to start from scratch.",
+                help=t('ui.money_already_in_your_accounts_or_cash_that_you_want'),
                 key=draft_prefix + "balance",
             )
             target_amount = st.number_input(
-                "Target amount (EUR)",
+                t('ui.target_amount_eur'),
                 min_value=0.0,
                 value=0.0,
                 step=100.0,
-                help="How much you would like to set aside in total, for example 3000. Leave 0 if you have not chosen a target yet.",
+                help=t('ui.how_much_you_would_like_to_set_aside_in_total'),
                 key=draft_prefix + "target",
             )
-            submitted = st.form_submit_button("Create fund", type="primary")
+            submitted = st.form_submit_button(t('ui.create_fund'), type="primary")
 
         if submitted:
             if not name.strip():
-                st.error("Please enter a fund name.")
+                st.error(t('ui.please_enter_a_fund_name'))
             elif current_balance < 0 or target_amount < 0:
-                st.error("Amounts must be 0 or more.")
+                st.error(t('ui.amounts_must_be_0_or_more'))
             elif current_balance > float(available_cash):
                 # Preserve the dashboard's existing starting-balance check.
                 st.warning(
-                    "The starting amount is higher than the cash in your accounts. "
-                    "Check the amount, or start this fund at 0."
+                    t('ui.the_starting_amount_is_higher_than_the_cash_in_your')
                 )
             else:
                 try:
@@ -131,30 +127,29 @@ def render_funds_step(user_id):
 
         if st.session_state.get(prefix + "fund_save_uncertain", False):
             st.error(
-                "We couldn't confirm that the fund was saved. "
-                "Check the fund list before trying again."
+                t('ui.we_couldn_t_confirm_that_the_fund_was_saved_check')
             )
-            if st.button("Refresh fund list", key=prefix + "funds_refresh"):
+            if st.button(t('ui.refresh_fund_list'), key=prefix + "funds_refresh"):
                 st.session_state.pop(prefix + "fund_save_uncertain", None)
                 st.rerun()
 
-        if funds and st.button("Cancel", type="tertiary", key=prefix + "fund_cancel"):
+        if funds and st.button(t('ui.cancel'), type="tertiary", key=prefix + "fund_cancel"):
             st.session_state[form_open_key] = False
             st.rerun()
     elif funds:
-        if st.button("Continue", type="primary", key=prefix + "funds_continue"):
+        if st.button(t('actions.continue'), type="primary", key=prefix + "funds_continue"):
             st.session_state[prefix + "step"] = "monthly_plan"
             st.rerun()
-        if st.button("Add another", key=prefix + "fund_another"):
+        if st.button(t('ui.add_another'), key=prefix + "fund_another"):
             st.session_state[form_open_key] = True
             st.rerun()
 
     if form_open:
-        st.caption("Only saved funds will be included. You can add a goal later.")
-        if st.button("Skip for now", type="tertiary", key=prefix + "funds_skip"):
+        st.caption(t('ui.only_saved_funds_will_be_included_you_can_add_a'))
+        if st.button(t('ui.skip_for_now'), type="tertiary", key=prefix + "funds_skip"):
             st.session_state[prefix + "step"] = "monthly_plan"
             st.rerun()
 
-    if st.button("Back to Debts", type="tertiary", key=prefix + "funds_back"):
+    if st.button(t('ui.back_to_debts'), type="tertiary", key=prefix + "funds_back"):
         st.session_state[prefix + "step"] = "debts"
         st.rerun()

@@ -3,6 +3,7 @@
 import importlib
 import sys
 import unittest
+from i18n import t
 from contextlib import nullcontext
 from decimal import Decimal
 from types import SimpleNamespace
@@ -67,7 +68,7 @@ class FundsStepTests(unittest.TestCase):
         self.ui.submit = False
         self.render()
         self.add.assert_called_once()
-        self.assertIn("Continue", self.ui.buttons)
+        self.assertIn(t('actions.continue'), self.ui.buttons)
 
     def test_existing_calculation_does_not_count_fund_as_extra_wealth(self):
         before = calculate_financial_summary(self.accounts, [], [], [])
@@ -109,13 +110,13 @@ class FundsStepTests(unittest.TestCase):
     def test_add_another_then_continue(self):
         self.ui.submit = True
         self.render()
-        self.ui.submit, self.ui.click = False, "Add another"
+        self.ui.submit, self.ui.click = False, t('ui.add_another')
         self.render()
         self.assertTrue(self.ui.session_state["onboarding_7_fund_form_open"])
         self.assertEqual(self.ui.session_state["onboarding_7_fund_form_version"], 1)
         self.ui.name, self.ui.click, self.ui.submit = "Travel", None, True
         self.render()
-        self.ui.submit, self.ui.click = False, "Continue"
+        self.ui.submit, self.ui.click = False, t('actions.continue')
         self.render()
         self.assertEqual(len(self.records), 2)
         self.assertEqual(self.ui.session_state["onboarding_7_step"], "monthly_plan")
@@ -123,17 +124,17 @@ class FundsStepTests(unittest.TestCase):
     def test_skip_draft_preserves_existing_funds_and_back_navigation(self):
         self.save(7, "Existing", 100.0, None)
         self.ui.session_state["onboarding_7_fund_form_open"] = True
-        self.ui.click = "Skip for now"
+        self.ui.click = t('ui.skip_for_now')
         self.render()
         self.add.assert_not_called()
         self.assertEqual(len(self.records), 1)
         self.assertEqual(self.ui.session_state["onboarding_7_step"], "monthly_plan")
-        self.ui.click = "Back to Debts"
+        self.ui.click = t('ui.back_to_debts')
         self.render()
         self.assertEqual(self.ui.session_state["onboarding_7_step"], "debts")
 
     def test_empty_user_can_skip_without_creation(self):
-        self.ui.click = "Skip for now"
+        self.ui.click = t('ui.skip_for_now')
         self.render()
         self.add.assert_not_called()
         self.assertEqual(self.ui.session_state["onboarding_7_step"], "monthly_plan")
@@ -154,7 +155,7 @@ class FundsStepTests(unittest.TestCase):
         self.render()
         self.ui.submit = False
         self.render()
-        self.assertIn("Refresh fund list", self.ui.buttons)
+        self.assertIn(t('ui.refresh_fund_list'), self.ui.buttons)
         self.assertNotIn("private detail", str(self.ui.errors))
         self.assertEqual(self.ui.session_state["onboarding_7_step"], "funds")
 

@@ -3,6 +3,7 @@
 import importlib
 import sys
 import unittest
+from i18n import t
 from contextlib import nullcontext
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -80,8 +81,8 @@ class AccountsStepTests(unittest.TestCase):
         self.assertNotIn("onboarding_7_dashboard", self.ui.session_state)
         self.ui.submit = False
         self.render()
-        self.assertIn("Continue", self.ui.buttons)
-        self.assertIn("Add another account", self.ui.buttons)
+        self.assertIn(t('actions.continue'), self.ui.buttons)
+        self.assertIn(t('ui.add_another_account'), self.ui.buttons)
         self.add.assert_called_once()
 
     def test_invalid_inputs_do_not_write(self):
@@ -93,40 +94,40 @@ class AccountsStepTests(unittest.TestCase):
                 self.assertTrue(self.ui.errors)
 
     def test_zero_balance_cash(self):
-        self.ui.name, self.ui.balance, self.ui.cash, self.ui.submit = "Cash", 0.0, True, True
+        self.ui.name, self.ui.balance, self.ui.cash, self.ui.submit = t('accounts.cash'), 0.0, True, True
         self.render()
-        self.add.assert_called_once_with(7, "Cash", "CASH", 0.0)
+        self.add.assert_called_once_with(7, t('accounts.cash'), "CASH", 0.0)
 
     def test_add_another_then_continue_to_assets(self):
         self.ui.submit = True
         self.render()
-        self.ui.submit, self.ui.click = False, "Add another account"
+        self.ui.submit, self.ui.click = False, t('ui.add_another_account')
         self.render()
         self.assertTrue(self.ui.session_state["onboarding_7_account_form_open"])
         self.assertEqual(self.ui.session_state["onboarding_7_account_form_version"], 1)
         self.ui.click, self.ui.name, self.ui.submit = None, "Swedbank", True
         self.render()
         self.assertEqual(len(self.records), 2)
-        self.ui.submit, self.ui.click = False, "Continue"
+        self.ui.submit, self.ui.click = False, t('actions.continue')
         self.render()
         self.assertEqual(self.ui.session_state["onboarding_7_step"], "assets")
 
     def test_empty_user_cannot_continue(self):
         self.render()
-        self.assertNotIn("Continue", self.ui.buttons)
+        self.assertNotIn(t('actions.continue'), self.ui.buttons)
 
     def test_existing_accounts_are_not_overwritten(self):
-        self.save(7, "Existing account", "BANK", 100.0)
+        self.save(7, t('ui.existing_account'), "BANK", 100.0)
         self.render()
         self.add.assert_not_called()
-        self.assertIn("Continue", self.ui.buttons)
+        self.assertIn(t('actions.continue'), self.ui.buttons)
 
     def test_read_failure_does_not_offer_creation(self):
         self.read.side_effect = RuntimeError("private database detail")
         self.ui.submit = True
         self.render()
         self.add.assert_not_called()
-        self.assertEqual(self.ui.buttons, ["Retry"])
+        self.assertEqual(self.ui.buttons, [t('ui.retry')])
         self.assertNotIn("private database detail", str(self.ui.errors))
 
     def test_save_failure_keeps_retry_available_on_later_rerun(self):
@@ -135,7 +136,7 @@ class AccountsStepTests(unittest.TestCase):
         self.render()
         self.ui.submit = False
         self.render()
-        self.assertIn("Refresh account list", self.ui.buttons)
+        self.assertIn(t('ui.refresh_account_list'), self.ui.buttons)
         self.assertNotIn("private database detail", str(self.ui.errors))
         self.assertNotIn("onboarding_7_step", self.ui.session_state)
 

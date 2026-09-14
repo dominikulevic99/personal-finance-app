@@ -4,6 +4,7 @@ import ast
 import importlib
 import sys
 import unittest
+from i18n import t
 from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
@@ -95,7 +96,7 @@ class DebtsStepTests(unittest.TestCase):
                 setattr(self.ui, field, previous)
 
     def test_skip_unsaved_draft_goes_to_funds_without_write(self):
-        self.ui.click = "I don't have any debt"
+        self.ui.click = t('ui.i_don_t_have_any_debt')
         self.render()
         self.add.assert_not_called()
         self.assertEqual(self.ui.session_state["onboarding_7_step"], "funds")
@@ -103,13 +104,13 @@ class DebtsStepTests(unittest.TestCase):
     def test_add_another_and_continue(self):
         self.ui.submit = True
         self.render()
-        self.ui.submit, self.ui.click = False, "Add another"
+        self.ui.submit, self.ui.click = False, t('ui.add_another')
         self.render()
         self.assertTrue(self.ui.session_state["onboarding_7_debt_form_open"])
         self.assertEqual(self.ui.session_state["onboarding_7_debt_form_version"], 1)
-        self.ui.name, self.ui.submit, self.ui.click = "Car loan", True, None
+        self.ui.name, self.ui.submit, self.ui.click = t('ui.car_loan'), True, None
         self.render()
-        self.ui.submit, self.ui.click = False, "Continue"
+        self.ui.submit, self.ui.click = False, t('actions.continue')
         self.render()
         self.assertEqual(len(self.records), 2)
         self.assertEqual(self.ui.session_state["onboarding_7_step"], "funds")
@@ -117,10 +118,10 @@ class DebtsStepTests(unittest.TestCase):
     def test_existing_debt_survives_skip_and_back(self):
         self.save(7, "Existing", "CAR_LOAN", 1000.0, 50.0, 3.0)
         self.ui.session_state["onboarding_7_debt_form_open"] = True
-        self.ui.click = "Skip for now"
+        self.ui.click = t('ui.skip_for_now')
         self.render()
         self.assertEqual(self.ui.session_state["onboarding_7_step"], "funds")
-        self.ui.click = "Back to Assets"
+        self.ui.click = t('ui.back_to_assets')
         self.render()
         self.assertEqual(self.ui.session_state["onboarding_7_step"], "assets")
         self.add.assert_not_called()
@@ -131,7 +132,7 @@ class DebtsStepTests(unittest.TestCase):
         self.ui.submit = True
         self.render()
         self.add.assert_not_called()
-        self.assertEqual(self.ui.buttons, ["Retry"])
+        self.assertEqual(self.ui.buttons, [t('ui.retry')])
         self.assertNotIn("private detail", str(self.ui.errors))
 
     def test_save_failure_keeps_refresh_available(self):
@@ -140,7 +141,7 @@ class DebtsStepTests(unittest.TestCase):
         self.render()
         self.ui.submit = False
         self.render()
-        self.assertIn("Refresh debt list", self.ui.buttons)
+        self.assertIn(t('ui.refresh_debt_list'), self.ui.buttons)
         self.assertNotIn("private detail", str(self.ui.errors))
         self.assertEqual(self.ui.session_state["onboarding_7_step"], "debts")
 

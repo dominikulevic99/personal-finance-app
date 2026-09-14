@@ -4,6 +4,7 @@ import ast
 import importlib
 import sys
 import unittest
+from i18n import t
 from contextlib import nullcontext
 from decimal import Decimal
 from pathlib import Path
@@ -75,23 +76,23 @@ class FinancialPictureTests(unittest.TestCase):
         self.summary.assert_called_once_with(self.accounts, self.assets, self.debts, self.funds)
         self.analytics.assert_called_once_with(7, "onboarding_completed", session_state=self.ui.session_state)
         self.assertEqual(self.ui.metrics, {
-            "Net worth": "€87,500.00", "Available cash": "€2,500.00",
-            "Debt": "€20,000.00", "Reserved Funds": "€500.00", "Free Cash": "€2,000.00",
-            "Liquid investments": "€4,000.00", "Semi-liquid assets": "€1,000.00",
-            "Non-liquid assets": "€100,000.00", "Expected income": "€2,500.00",
-            "Planned allocations": "€2,300.00", "Unallocated": "€200.00",
+            t('metrics.net_worth'): "€87,500.00", t('metrics.available_cash'): "€2,500.00",
+            t('ui.debt'): "€20,000.00", t('metrics.set_aside'): "€500.00", t('metrics.free_cash'): "€2,000.00",
+            t('ui.liquid_investments_detail'): "€4,000.00", t('ui.semi_liquid_assets_detail'): "€1,000.00",
+            t('ui.non_liquid_assets_detail'): "€100,000.00", t('plan.expected_income'): "€2,500.00",
+            t('ui.planned_allocations'): "€2,300.00", t('ui.unallocated'): "€200.00",
         })
 
     def test_replay_reveal_does_not_log_onboarding_completion(self):
         self.ui.session_state['onboarding_7_replay_mode'] = True
         picture_ui.render_financial_picture(7)
         self.analytics.assert_not_called()
-        self.assertIn('Net worth', self.ui.metrics)
+        self.assertIn(t('metrics.net_worth'), self.ui.metrics)
 
     def test_tester_jump_does_not_log_completion(self):
         picture_ui.render_financial_picture(7, track_completion=False)
         self.analytics.assert_not_called()
-        self.assertIn('Net worth', self.ui.metrics)
+        self.assertIn(t('metrics.net_worth'), self.ui.metrics)
 
     def test_all_reads_use_user_and_selected_month(self):
         picture_ui.load_financial_picture(8, 2026, 8)
@@ -100,27 +101,27 @@ class FinancialPictureTests(unittest.TestCase):
         self.readers["get_monthly_plan"].assert_called_with(8, 2026, 8)
         self.readers["get_plan_items"].assert_called_with(8, 70)
 
-    def test_render_does_not_change_state_or_records(self):
+    def test_render_only_marks_feedback_readiness_and_preserves_existing_state(self):
         state = dict(self.ui.session_state)
         before = repr((self.accounts, self.assets, self.debts, self.funds, self.plan, self.items))
         picture_ui.render_financial_picture(7)
         picture_ui.render_financial_picture(7)
-        self.assertEqual(state, self.ui.session_state)
+        self.assertEqual({**state, 'feedback_7_picture_seen': True}, self.ui.session_state)
         self.assertEqual(before, repr((self.accounts, self.assets, self.debts, self.funds, self.plan, self.items)))
 
     def test_missing_plan_is_not_shown_as_zero_income(self):
         self.readers["get_monthly_plan"].return_value = None
         picture_ui.render_financial_picture(7)
-        self.assertNotIn("Expected income", self.ui.metrics)
-        self.assertIn("No monthly plan is saved for this month yet.", self.ui.messages)
+        self.assertNotIn(t('plan.expected_income'), self.ui.metrics)
+        self.assertIn(t('ui.no_monthly_plan_is_saved_for_this_month_yet'), self.ui.messages)
         self.readers["get_plan_items"].assert_not_called()
 
     def test_zero_income_plan_is_distinct_from_missing_plan(self):
         self.plan.planned_income = Decimal("0")
         self.items.clear()
         picture_ui.render_financial_picture(7)
-        self.assertEqual(self.ui.metrics["Expected income"], "€0.00")
-        self.assertEqual(self.ui.metrics["Unallocated"], "€0.00")
+        self.assertEqual(self.ui.metrics[t('plan.expected_income')], "€0.00")
+        self.assertEqual(self.ui.metrics[t('ui.unallocated')], "€0.00")
 
     def test_empty_optional_data_renders_without_errors(self):
         self.accounts.clear()
@@ -128,17 +129,17 @@ class FinancialPictureTests(unittest.TestCase):
         self.debts.clear()
         self.funds.clear()
         picture_ui.render_financial_picture(7)
-        self.assertEqual(self.ui.metrics["Net worth"], "€0.00")
-        self.assertEqual(self.ui.metrics["Reserved Funds"], "€0.00")
+        self.assertEqual(self.ui.metrics[t('metrics.net_worth')], "€0.00")
+        self.assertEqual(self.ui.metrics[t('metrics.set_aside')], "€0.00")
         self.assertFalse(self.ui.errors)
 
     def test_negative_values_are_not_hidden_or_judged(self):
         self.debts[0].remaining_balance = Decimal("200000")
         self.plan.planned_income = Decimal("2000")
         picture_ui.render_financial_picture(7)
-        self.assertEqual(self.ui.metrics["Net worth"], "€-92,500.00")
-        self.assertEqual(self.ui.metrics["Unallocated"], "€-300.00")
-        self.assertIn("Your planned allocations currently exceed your expected income.", self.ui.captions)
+        self.assertEqual(self.ui.metrics[t('metrics.net_worth')], "€-92,500.00")
+        self.assertEqual(self.ui.metrics[t('ui.unallocated')], "€-300.00")
+        self.assertIn(t('ui.your_planned_allocations_currently_exceed_your_expected_income'), self.ui.captions)
 
     def test_any_read_failure_shows_retry_without_partial_metrics(self):
         for reader in self.readers.values():
@@ -146,9 +147,10 @@ class FinancialPictureTests(unittest.TestCase):
                 reader.side_effect = RuntimeError("private database detail")
                 picture_ui.render_financial_picture(7)
                 self.assertFalse(self.ui.metrics)
+                self.assertNotIn('feedback_7_picture_seen', self.ui.session_state)
                 self.analytics.assert_not_called()
-                self.assertNotIn("Your financial picture is ready.", self.ui.headlines)
-                self.assertIn("Retry", self.ui.buttons)
+                self.assertNotIn(t('ui.your_financial_picture_is_ready'), self.ui.headlines)
+                self.assertIn(t('ui.retry'), self.ui.buttons)
                 self.assertNotIn("private database detail", str(self.ui.errors))
                 reader.side_effect = None
 
@@ -171,10 +173,10 @@ class FinancialPictureTests(unittest.TestCase):
         import onboarding_layout
         with patch.object(onboarding_layout, "st", self.ui):
             with onboarding_layout.onboarding_shell(complete=True): pass
-            self.assertIn("Setup complete", self.ui.html_output[-1])
+            self.assertIn(t('ui.setup_complete'), self.ui.html_output[-1])
             self.assertIn('aria-valuenow="5"', self.ui.html_output[-1])
             with onboarding_layout.onboarding_shell(step=2): pass
-            self.assertIn("Step 2 of 5", self.ui.html_output[-1])
+            self.assertIn(t('onboarding.step', step=2), self.ui.html_output[-1])
             self.assertIn('aria-valuenow="1"', self.ui.html_output[-1])
 
 
